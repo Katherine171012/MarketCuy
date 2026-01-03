@@ -26,11 +26,12 @@ class Cliente extends Model
 
 
     //Obtener todos los clientes
-    public static function obtenerTodos()
+    public static function obtenerActivos()
     {
-        return self::orderBy('cli_nombre', 'asc')->get();
+        return self::where('estado_cli', 'ACT')
+            ->orderBy('cli_nombre', 'ASC')
+            ->get();
     }
-
     //Consulta por parámetro
     public static function consultarPorParametro($campo, $valor, $porPagina = 10)
     {
@@ -50,9 +51,6 @@ class Cliente extends Model
     public static function crearCliente(array $datos)
     {
         return self::create($datos);
-    }
-    public function ciudad() {
-        return $this->belongsTo(Ciudad::class, 'id_ciudad', 'id_ciudad');
     }
     public static function generarSiguienteId()
     {
