@@ -39,15 +39,6 @@
                 </select>
             </div>
 
-            <!-- ✅ NUEVO: Imagen (solo subir, NO mostrar aún) -->
-            <div class="mb-3">
-                <label class="form-label">Imagen del Producto (opcional)</label>
-                <input type="file"
-                       class="form-control"
-                       name="pro_imagen"
-                       accept="image/*">
-            </div>
-
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Precio Compra</label>

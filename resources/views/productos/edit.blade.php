@@ -1,6 +1,6 @@
-<div class="card border-warning">
-    <div class="card-header fw-semibold bg-warning-subtle">
-        Editando Producto: {{ $productoEditar->id_producto }}
+<div class="card border-0 shadow-sm">
+    <div class="card-header fw-semibold text-white" style="background:#660404;">
+    Editando Producto: {{ $productoEditar->id_producto }}
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('productos.update', $productoEditar->id_producto) }}" enctype="multipart/form-data">
@@ -42,17 +42,7 @@
                 </div>
             </div>
 
-            <hr class="my-4">
-
-            <!-- ✅ NUEVO: Imagen (opcional). No mostramos preview aún -->
-            <div class="mb-3">
-                <label class="form-label">Cambiar Imagen (opcional)</label>
-                <input type="file"
-                       name="pro_imagen"
-                       class="form-control"
-                       accept="image/*">
-            </div>
-
+            <hr class="my-4 text-muted">
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Categoría</label>
@@ -129,7 +119,7 @@
             </div>
 
             <div class="mt-3 d-flex gap-2">
-                <button type="submit" class="btn btn-warning">
+                <button type="submit" class="btn btn-primary">
                     Guardar Cambios
                 </button>
                 <a href="{{ route('productos.index') }}" class="btn btn-secondary">

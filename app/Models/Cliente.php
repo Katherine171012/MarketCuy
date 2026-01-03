@@ -52,6 +52,9 @@ class Cliente extends Model
     {
         return self::create($datos);
     }
+    public function ciudad() {
+        return $this->belongsTo(Ciudad::class, 'id_ciudad', 'id_ciudad');
+    }
     public static function generarSiguienteId()
     {
         $ultimoId = self::where('id_cliente', 'LIKE', 'CLI%')

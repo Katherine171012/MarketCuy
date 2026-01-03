@@ -98,6 +98,20 @@ return [
 
     // Operación
     'M60' => 'La operación no se puede realizar en el estado actual.',
+    'M61' => '¿Está seguro de realizar esta acción?',
+    'M62' => 'Registro actualizado correctamente.',
+    'M63' => 'La factura no puede anularse en su estado actual.',
+    'M64' => 'El rango de fechas es inválido (desde no puede ser mayor que hasta).',
+    'M65' => 'Debe seleccionar un cliente válido.',
+    'M66' => 'El cliente seleccionado no se encuentra activo.',
+    'M67' => 'No se permite agregar el mismo producto más de una vez en la factura.',
+    'M68' => 'La cantidad está vacía.',
+    'M69' => '¿Está seguro de aprobar esta factura? Una vez aprobada no podrá modificarse.',
+    'M70' => 'Factura aprobada correctamente.',
+    'M71' => 'La factura no puede aprobarse en su estado actual.',
+    'M72' => 'Esta factura se encuentra aprobada o anulada. Solo está disponible para visualización.',
+
+
 
 
    //EXCEPCIONES

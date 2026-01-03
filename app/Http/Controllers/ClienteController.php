@@ -12,14 +12,22 @@ class ClienteController extends Controller
 {
     public function index(Request $request)
     {
-        try {
-            $porPagina = $request->get('per_page', 10);
+        $porPagina = $request->get('per_page', 10);
 
+        try {
             $clientes = Cliente::obtenerParaLista($porPagina)->withQueryString();
 
             return view('clientes.index', compact('clientes', 'porPagina'));
+
         } catch (\Exception $e) {
-            return view('clientes.index', ['clientes' => collect(), 'codigo_mensaje' => 'E12']);
+
+            $clientes = new \Illuminate\Pagination\LengthAwarePaginator([], 0, $porPagina);
+
+            return view('clientes.index', [
+                'clientes' => $clientes,
+                'porPagina' => $porPagina,
+                'codigo_mensaje' => 'E12'
+            ]);
         }
     }
     public function create()
