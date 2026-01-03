@@ -1,4 +1,3 @@
-{{-- PANEL QUE SE DESPLIEGA - ID debe coincidir con el botón --}}
 <div class="collapse mb-4 {{ (isset($busquedaActiva) || request('valor_texto') || request('valor_ciudad')) ? 'show' : '' }}" id="panelBusqueda">
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden" style="border: 1px solid #660404 !important;">
         <div class="card-header py-2 text-white" style="background-color: #660404;">
@@ -39,7 +38,6 @@
                     <div class="col-md-3">
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-concho btn-sm fw-bold px-4 w-100 shadow-sm">Buscar</button>
-                            {{-- Botón para cerrar el panel --}}
                             <button type="button" class="btn btn-secondary btn-sm fw-bold px-3 shadow-sm" data-bs-toggle="collapse" data-bs-target="#panelBusqueda">Cerrar</button>
                         </div>
                     </div>
@@ -50,7 +48,6 @@
 </div>
 
 <script>
-    // Lógica para que el buscador sea dinámico
     document.getElementById('criterioBusqueda').addEventListener('change', function() {
         const ph = this.options[this.selectedIndex].getAttribute('data-ph');
         document.getElementById('labelDinamico').innerText = ph;

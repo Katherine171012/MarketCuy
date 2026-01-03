@@ -20,7 +20,6 @@
             </div>
         </div>
 
-        {{-- Panel incluido (se abrirá/cerrará con el botón de arriba) --}}
         @include('clientes.buscar')
 
         <div class="card border-0 shadow-sm overflow-hidden mb-4">

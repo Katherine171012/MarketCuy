@@ -3,7 +3,7 @@
 @section('content')
     <nav class="navbar navbar-expand-lg navbar-dark bg-concho mb-4 shadow-sm">
         <div class="container">
-            <span class="navbar-brand fw-bold font-monospace">MarketCuy</span>
+            <a href="{{ route('home') }}" class="navbar-brand fw-bold font-monospace text-decoration-none">MarketCuy</a>
             <div class="navbar-nav ms-auto">
                 <span class="nav-link disabled text-white-50 small">Clientes</span>
             </div>
@@ -41,7 +41,59 @@
             </div>
         @endif
 
+        @if(isset($clienteDetalle))
+            <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden" style="border: 1px solid #660404 !important;">
+                <div class="card-header py-2 text-white" style="background-color: #660404;">
+            <span class="fw-bold small text-uppercase">
+                <i class="fas fa-eye me-2"></i>Información del Cliente (Solo Lectura): {{ $clienteDetalle->id_cliente }}
+            </span>
+                </div>
 
+                <div class="card-body p-4 bg-white">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">ID Cliente</label>
+                            <input type="text" value="{{ $clienteDetalle->id_cliente }}" class="form-control bg-light border-0" readonly>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Identificación</label>
+                            <input type="text" value="{{ $clienteDetalle->cli_ruc_ced }}" class="form-control bg-light border-0" readonly>
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Nombre Completo</label>
+                            <input type="text" value="{{ $clienteDetalle->cli_nombre }}" class="form-control bg-light border-0 fw-bold" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Ciudad</label>
+                            <input type="text" value="{{ $clienteDetalle->ciudad->ciu_descripcion ?? 'No asignada' }}" class="form-control bg-light border-0" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Correo Electrónico</label>
+                            <input type="text" value="{{ $clienteDetalle->cli_mail }}" class="form-control bg-light border-0" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Celular</label>
+                            <input type="text" value="{{ $clienteDetalle->cli_celular }}" class="form-control bg-light border-0" readonly>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Dirección</label>
+                            <input type="text" value="{{ $clienteDetalle->cli_direccion ?? 'N/A' }}" class="form-control bg-light border-0" readonly>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <a href="{{ route('clientes.index') }}" class="btn btn-secondary fw-bold px-5 py-2 shadow-sm" style="border-radius: 6px; background-color: #6c757d; border: none;">
+                            Cerrar Vista
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <div class="card border-0 shadow-sm overflow-hidden">
             <div class="table-responsive">
@@ -85,7 +137,9 @@
                                     </div>
 
                                 @else
-                                    <a href="{{ route('clientes.show', $cliente) }}" class="text-muted small fw-bold text-decoration-none">Visualizar</a>
+                                    <a href="{{ route('clientes.detalle', $cliente) }}" class="text-muted small fw-bold text-decoration-none">
+                                        <i class="fas fa-eye me-1"></i> Visualizar
+                                    </a>
                                 @endif
                             </td>
                         </tr>
