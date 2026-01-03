@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class Proveedor extends Model
 {
@@ -30,21 +32,118 @@ class Proveedor extends Model
         return $this->belongsTo(Ciudad::class, 'id_ciudad', 'id_ciudad');
     }
 
+    // Genera PRV0001, PRV0002... de forma robusta (char(7) con espacios)
     public static function generarNuevoId(): string
     {
-        $ultimo = self::query()
-            ->select('id_proveedor')
-            ->orderBy('id_proveedor', 'desc')
-            ->value('id_proveedor');
+        $maxNum = self::query()
+            ->selectRaw("MAX(CAST(SUBSTRING(TRIM(id_proveedor), 4, 4) AS INTEGER)) AS maxnum")
+            ->value('maxnum');
 
-        $ultimo = trim((string) $ultimo);
-        $num = 0;
+        $num = (int) ($maxNum ?? 0);
+        $num++;
 
-        if ($ultimo !== '' && preg_match('/^PRV(\d{4})$/', $ultimo, $m)) {
-            $num = (int) $m[1];
+        return 'PRV' . str_pad((string) $num, 4, '0', STR_PAD_LEFT);
+    }
+
+    // Verifica duplicidad de RUC/Cédula (con TRIM porque son char)
+    public static function existeRuc(string $ruc, ?string $excluirId = null): bool
+    {
+        $ruc = trim($ruc);
+
+        $q = self::query()
+            ->whereRaw('TRIM(prv_ruc_ced) = ?', [$ruc]);
+
+        if ($excluirId !== null && trim($excluirId) !== '') {
+            $q->whereRaw('TRIM(id_proveedor) <> ?', [trim($excluirId)]);
         }
 
-        $num++;
-        return 'PRV' . str_pad((string) $num, 4, '0', STR_PAD_LEFT);
+        return $q->exists();
+    }
+
+    // Construye la consulta de Index con filtro y orden
+    public static function construirQueryIndex(?string $parametro, string $valor, ?string $orden)
+    {
+        $valor = trim((string) $valor);
+        $parametro = $parametro ? trim($parametro) : null;
+        $orden = $orden ? trim($orden) : null;
+
+        $query = self::query()
+            ->with('ciudad')
+            // ACT primero, luego INA (por ser char(3) usamos TRIM)
+            ->orderByRaw("CASE WHEN TRIM(estado_prv) = 'ACT' THEN 0 ELSE 1 END")
+            // orden base estable (por si no eligen orden)
+            ->orderBy('id_proveedor');
+
+        // Filtro por parámetro
+        if ($parametro && $valor !== '') {
+            if ($parametro === 'nombre') {
+                $query->where('prv_nombre', 'ILIKE', "%{$valor}%");
+            } elseif ($parametro === 'ruc') {
+                $query->where('prv_ruc_ced', 'ILIKE', "%{$valor}%");
+            } elseif ($parametro === 'correo') {
+                $query->where('prv_mail', 'ILIKE', "%{$valor}%");
+            } elseif ($parametro === 'estado') {
+                $query->whereRaw('TRIM(estado_prv) = ?', [strtoupper($valor)]);
+            } elseif ($parametro === 'ciudad') {
+                $query->whereHas('ciudad', function ($q) use ($valor) {
+                    $q->where('ciu_descripcion', 'ILIKE', "%{$valor}%");
+                });
+            }
+        }
+
+        // Orden adicional
+        if ($orden === 'nombre') {
+            $query->orderBy('prv_nombre');
+        } elseif ($orden === 'estado') {
+            $query->orderByRaw("TRIM(estado_prv) ASC");
+        }
+
+        return $query;
+    }
+
+
+    // Crea proveedor con transacción (ID + estado ACT + fecha actual)
+    public static function registrar(array $data): self
+    {
+        return DB::transaction(function () use ($data) {
+            $nuevoId = self::generarNuevoId();
+
+            return self::create([
+                'id_proveedor'  => $nuevoId,
+                'prv_nombre'    => $data['prv_nombre'],
+                'prv_ruc_ced'   => $data['prv_ruc_ced'],
+                'id_ciudad'     => $data['id_ciudad'],
+                'prv_mail'      => $data['prv_mail'],
+                'prv_telefono'  => $data['prv_telefono'],
+                'prv_celular'   => $data['prv_celular'] ?? null,
+                'prv_direccion' => $data['prv_direccion'] ?? null,
+                'estado_prv'    => 'ACT',
+                'fecha_ingreso' => now()->toDateString(),
+            ]);
+        });
+    }
+
+    // Actualiza proveedor con transacción (solo campos editables)
+    public function aplicarCambios(array $data): void
+    {
+        DB::transaction(function () use ($data) {
+            $this->update([
+                'prv_nombre'    => $data['prv_nombre'],
+                'prv_ruc_ced'   => $data['prv_ruc_ced'],
+                'id_ciudad'     => $data['id_ciudad'],
+                'prv_mail'      => $data['prv_mail'],
+                'prv_telefono'  => $data['prv_telefono'],
+                'prv_celular'   => $data['prv_celular'] ?? null,
+                'prv_direccion' => $data['prv_direccion'] ?? null,
+            ]);
+        });
+    }
+
+    // Inactiva (eliminar lógico)
+    public function inactivar(): void
+    {
+        DB::transaction(function () {
+            $this->update(['estado_prv' => 'INA']);
+        });
     }
 }
