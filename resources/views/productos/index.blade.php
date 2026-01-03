@@ -65,7 +65,7 @@
 
         {{-- Buscador (collapse) --}}
         <div class="row g-3 mb-4">
-            <div class="col-lg-6">
+            <div class="col-12">
                 <div class="collapse" id="collapseBuscar">
                     @include('productos.buscar')
                 </div>
@@ -79,17 +79,37 @@
             </div>
         @endif
 
-        {{-- ✅ OJO: YA NO MOSTRAMOS eliminar "incrustado"
-             (quitamos el include productos.eliminar)
-        --}}
+        {{-- Visualizar --}}
+        @if(isset($productoVer) && $productoVer)
+            <div class="card mb-4">
+                <div class="card-header fw-semibold">
+                    Detalle del Producto: {{ $productoVer->id_producto }}
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4"><strong>ID:</strong> {{ $productoVer->id_producto }}</div>
+                        <div class="col-md-8"><strong>Descripción:</strong> {{ $productoVer->pro_descripcion }}</div>
 
-        {{-- TABLA --}}
+                        <div class="col-md-4"><strong>Categoría:</strong> {{ $productoVer->pro_categoria }}</div>
+                        <div class="col-md-4"><strong>Precio:</strong> {{ $productoVer->pro_precio_venta }}</div>
+                        <div class="col-md-4"><strong>Stock:</strong> {{ $productoVer->pro_saldo_final }}</div>
+
+                        <div class="col-md-4"><strong>UM:</strong> {{ $productoVer->pro_um_compra }}</div>
+                        <div class="col-md-4"><strong>Estado:</strong> {{ $productoVer->estado_prod === 'ACT' ? 'Activo' : 'Inactivo' }}</div>
+                    </div>
+
+                    <div class="mt-3">
+                        <a href="{{ route('productos.index') }}" class="btn btn-secondary">Cerrar</a>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="table-responsive">
             <table class="table table-striped table-bordered align-middle">
                 <thead class="table-dark">
                 <tr>
                     <th>ID</th>
-                    <th>Imagen</th>
                     <th>Descripción</th>
                     <th>Precio</th>
                     <th>Stock</th>
@@ -101,31 +121,15 @@
                 <tbody>
                 @foreach($productos as $p)
                     @php
-                        // modal único por fila
-                        $modalId = 'modalEliminar_' . $p->id_producto;
-
                         [$badge, $estadoTxt] = match($p->estado_prod) {
                             'ACT' => ['success', 'Activo'],
-                            'INA' => ['danger',  'Inactivo'],
-                            'PEN' => ['warning', 'Pendiente'],
+                            'INA' => ['secondary', 'Inactivo'],
                             default => ['secondary', $p->estado_prod ?? 'Desconocido'],
                         };
                     @endphp
 
                     <tr>
                         <td>{{ $p->id_producto }}</td>
-
-                        <td class="text-center">
-                            @if($p->pro_imagen)
-                                <img src="{{ asset('storage/productos/' . $p->pro_imagen) }}"
-                                     alt="Imagen {{ $p->pro_descripcion }}"
-                                     width="60" height="60"
-                                     style="object-fit: cover; border-radius: 6px;">
-                            @else
-                                <span class="text-muted">Sin imagen</span>
-                            @endif
-                        </td>
-
                         <td>{{ $p->pro_descripcion }}</td>
                         <td>{{ $p->pro_precio_venta }}</td>
                         <td>{{ $p->pro_saldo_final }}</td>
@@ -135,60 +139,68 @@
                         </td>
 
                         <td class="text-center">
-                            <a class="btn btn-warning btn-sm"
-                               href="{{ route('productos.index', ['edit' => $p->id_producto]) }}">
-                                Editar
-                            </a>
+                            @if($p->estado_prod === 'ACT')
+                                @php($modalId = 'modalEliminar_' . preg_replace('/[^A-Za-z0-9\-_]/', '_', $p->id_producto))
 
-                            {{-- ✅ ELIMINAR COMO CLIENTES: abre MODAL (NO navega) --}}
-                            <button type="button"
-                                    class="btn btn-danger btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#{{ $modalId }}">
-                                Eliminar
-                            </button>
+                                <a class="btn btn-warning btn-sm"
+                                   href="{{ route('productos.index', ['edit' => $p->id_producto]) }}">
+                                    Editar
+                                </a>
 
-                            {{-- ✅ MODAL CENTRADO + OVERLAY --}}
-                            <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
+                                <button type="button"
+                                        class="btn btn-danger btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#{{ $modalId }}">
+                                    Eliminar
+                                </button>
 
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Confirmar eliminación</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                                        </div>
+                                {{-- ✅ MODAL (solo para ACT) --}}
+                                <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
 
-                                        <div class="modal-body">
-                                            ¿Estás seguro de eliminar el producto
-                                            <strong>{{ $p->id_producto }}</strong> – <strong>{{ $p->pro_descripcion }}</strong>?
-                                        </div>
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirmar eliminación</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                            </div>
 
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                Cancelar
-                                            </button>
+                                            <div class="modal-body">
+                                                ¿Estás seguro de eliminar el producto
+                                                <strong>{{ $p->id_producto }}</strong> – <strong>{{ $p->pro_descripcion }}</strong>?
+                                            </div>
 
-                                            <form method="POST" action="{{ route('productos.destroy', $p->id_producto) }}">
-                                                @csrf
-                                                @method('DELETE')
-
-                                                <button type="submit" class="btn btn-danger">
-                                                    Sí, eliminar
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    Cancelar
                                                 </button>
-                                            </form>
-                                        </div>
 
+                                                <form method="POST" action="{{ route('productos.destroy', $p->id_producto) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+
+                                                    <button type="submit" class="btn btn-danger">
+                                                        Sí, eliminar
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            {{-- /MODAL --}}
+                                {{-- /MODAL --}}
+                            @else
+                                <a class="btn btn-outline-dark btn-sm"
+                                   href="{{ route('productos.index', ['view' => $p->id_producto]) }}">
+                                    Visualizar
+                                </a>
+                            @endif
                         </td>
                     </tr>
                 @endforeach
 
                 @if($productos->count() === 0)
                     <tr>
-                        <td colspan="7" class="text-center text-muted">
+                        <td colspan="6" class="text-center text-muted">
                             Sin registros
                         </td>
                     </tr>
@@ -197,9 +209,7 @@
             </table>
         </div>
 
-        {{-- ✅ BLOQUE "Mostrar X" + "Mostrando..." (como pidió tu jefa)
-             Funciona en /productos y /productos/buscar porque usa url()->current()
-        --}}
+        {{-- ✅ BLOQUE "Mostrar X" + "Mostrando..." --}}
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
 
             <form method="GET" action="{{ url()->current() }}" class="d-flex align-items-center gap-2">

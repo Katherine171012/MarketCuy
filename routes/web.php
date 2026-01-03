@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ProveedorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -11,7 +12,6 @@ use App\Http\Controllers\ClienteController;
 |--------------------------------------------------------------------------
 | Raíz del sitio carga la portada directamente.
 */
-
 Route::get('/', function () {
     return view('layouts.portada');
 })->name('home');
@@ -20,14 +20,12 @@ Route::get('/home', function () {
     return redirect()->route('home');
 });
 
+
 /*
 |--------------------------------------------------------------------------
 | CLIENTES (código de tu compañera)
 |--------------------------------------------------------------------------
-| 1) Rutas estáticas primero
-| 2) Rutas dinámicas al final
 */
-
 Route::get('/clientes', [ClienteController::class, 'index'])
     ->name('clientes.index');
 
@@ -46,14 +44,10 @@ Route::post('/clientes/buscar', [ClienteController::class, 'buscar'])
 Route::post('/clientes', [ClienteController::class, 'store'])
     ->name('clientes.store');
 
-// 2. RUTAS DINÁMICAS (Usan {cliente}, deben ir al final)
-
-// Ver detalle (Solo lectura)
-
+// RUTAS DINÁMICAS (al final)
 Route::get('/clientes/{cliente}/detalle', [ClienteController::class, 'verDetalle'])
     ->name('clientes.detalle');
 
-// Modificar cliente
 Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])
     ->name('clientes.edit');
 
@@ -71,11 +65,9 @@ Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])
 |--------------------------------------------------------------------------
 | PRODUCTOS (tu módulo)
 |--------------------------------------------------------------------------
-| Mantengo tus rutas EXACTAS para no romper nada.
 */
 Route::prefix('productos')->group(function () {
 
-    // tu entrada actual /productos/menu manda a la PORTADA
     Route::get('/menu', function () {
         return redirect()->route('home');
     })->name('productos.menu');
@@ -84,15 +76,12 @@ Route::prefix('productos')->group(function () {
         return redirect()->route('home');
     })->name('productos.consultar');
 
-    // PANTALLA PRINCIPAL DEL MÓDULO
     Route::get('/', [ProductoController::class, 'index'])
         ->name('productos.index');
 
-    // CRUD
     Route::post('/guardar', [ProductoController::class, 'store'])
         ->name('productos.store');
 
-    // Buscar (GET para paginación)
     Route::get('/buscar', [ProductoController::class, 'buscar'])
         ->name('productos.buscar');
 
@@ -104,4 +93,36 @@ Route::prefix('productos')->group(function () {
 
     Route::delete('/{id}', [ProductoController::class, 'destroy'])
         ->name('productos.destroy');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| PROVEEDORES
+ */
+Route::prefix('proveedores')->group(function () {
+
+    // Pantalla principal
+    Route::get('/', [ProveedorController::class, 'index'])
+        ->name('proveedores.index');
+
+    // Crear (formulario)
+    Route::get('/crear', [ProveedorController::class, 'create'])
+        ->name('proveedores.create');
+
+    // Guardar
+    Route::post('/', [ProveedorController::class, 'store'])
+        ->name('proveedores.store');
+
+    // Editar (redirige al index con ?edit=ID como ya lo tienes)
+    Route::get('/{proveedor}/editar', [ProveedorController::class, 'edit'])
+        ->name('proveedores.edit');
+
+    // Actualizar
+    Route::put('/{proveedor}', [ProveedorController::class, 'update'])
+        ->name('proveedores.update');
+
+    // Eliminar lógico (DELETE)
+    Route::delete('/{proveedor}', [ProveedorController::class, 'destroy'])
+        ->name('proveedores.destroy');
 });

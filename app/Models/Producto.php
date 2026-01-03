@@ -28,7 +28,6 @@ class Producto extends Model
         'pro_saldo_final',
         'estado_prod',
         'pro_categoria',
-        'pro_imagen',
     ];
 
     // =========================================================
@@ -59,7 +58,7 @@ class Producto extends Model
     /** Query base: solo ACT */
     public static function queryActivos()
     {
-        return self::query()->where('estado_prod', 'ACT');
+        return self::query()->whereIn('estado_prod', ['ACT', 'INA']);
     }
 
     /**
@@ -74,8 +73,7 @@ class Producto extends Model
             ->orderByRaw("CASE
                 WHEN estado_prod = 'ACT' THEN 1
                 WHEN estado_prod = 'INA' THEN 2
-                WHEN estado_prod = 'PEN' THEN 3
-                ELSE 4 END")
+                ELSE 3 END")
             ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
             ->paginate($porPagina);
     }
@@ -192,7 +190,6 @@ class Producto extends Model
             'pro_saldo_final'   => $data['pro_saldo_inicial'],
             'estado_prod'       => 'ACT',
             'pro_categoria'     => $data['pro_categoria'] ?? null,
-            'pro_imagen'        => $data['pro_imagen'] ?? null,
         ]);
     }
 
@@ -209,8 +206,6 @@ class Producto extends Model
 
             'pro_saldo_final'   => (int) $data['pro_saldo_final'],
             'pro_categoria'     => $data['pro_categoria'] ?? $this->pro_categoria,
-
-            'pro_imagen'        => $data['pro_imagen'] ?? $this->pro_imagen,
         ]);
     }
 

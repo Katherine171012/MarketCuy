@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Producto;
 use App\Models\UnidadMedida;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 class ProductoController extends Controller
@@ -36,12 +35,15 @@ class ProductoController extends Controller
             $perPage = 10;
         }
 
-        // ✅ método estilo jefa (orden por estado + id)
+        // ✅ método estilo jefa (orden por estado + id) (ACT primero, INA al final) -> lo controlas en el Model
         $productos = Producto::obtenerParaLista($perPage);
         $productos->appends($request->except('page'));
 
         $unidades = UnidadMedida::listar();
 
+        /* =========================
+           EDITAR (solo si está ACT)
+        ==========================*/
         $editId = $request->get('edit');
         $productoEditar = null;
 
@@ -52,9 +54,17 @@ class ProductoController extends Controller
                 return redirect()->route('productos.index')
                     ->with('error', $this->msg('gen.error'));
             }
+
+            // ✅ BLOQUEO: si está INA no se puede editar
+            if ($productoEditar->estado_prod === 'INA') {
+                return redirect()->route('productos.index')
+                    ->with('error', $this->msg('M60')); // operación no permitida
+            }
         }
 
-        // ✅ MODO "SHOW ELIMINAR" (si viene ?delete=PID)
+        /* =========================
+           ELIMINAR (solo confirma)
+        ==========================*/
         $deleteId = $request->get('delete');
         $productoEliminar = null;
 
@@ -67,11 +77,27 @@ class ProductoController extends Controller
             }
         }
 
+        /* =========================
+           VISUALIZAR (solo lectura)
+        ==========================*/
+        $viewId = $request->get('view');
+        $productoVer = null;
+
+        if ($viewId) {
+            $productoVer = Producto::buscarPorId($viewId);
+
+            if (!$productoVer) {
+                return redirect()->route('productos.index')
+                    ->with('error', $this->msg('gen.error'));
+            }
+        }
+
         return $this->viewWithMsgs('productos.index', [
             'productos' => $productos,
             'unidades' => $unidades,
             'productoEditar' => $productoEditar,
             'productoEliminar' => $productoEliminar,
+            'productoVer' => $productoVer,
             // si no hay registros en la lista principal, usamos "Sin resultados"
             'info' => $productos->count() === 0 ? $this->msg('M59') : null,
         ]);
@@ -82,10 +108,6 @@ class ProductoController extends Controller
     ==========================*/
     public function store(Request $request)
     {
-        $request->validate([
-            'pro_imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
-
         if (!$request->pro_descripcion) {
             return back()->withErrors([
                 'pro_descripcion' => $this->msg('M25') // Producto vacío
@@ -139,19 +161,8 @@ class ProductoController extends Controller
         try {
             $nuevoId = Producto::generarSiguienteId();
 
-            $data = $request->except('pro_imagen');
+            $data = $request->all();
             $data['id_producto'] = $nuevoId;
-
-            if ($request->hasFile('pro_imagen')) {
-                $file = $request->file('pro_imagen');
-                $ext  = strtolower($file->getClientOriginalExtension());
-                $nombre = $nuevoId . '.' . $ext;
-
-                $file->storeAs('public/productos', $nombre);
-                $data['pro_imagen'] = $nombre;
-            } else {
-                $data['pro_imagen'] = null;
-            }
 
             Producto::crearProductoTx($data);
 
@@ -178,15 +189,17 @@ class ProductoController extends Controller
     ==========================*/
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'pro_imagen' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
-
         $producto = Producto::buscarPorId($id);
 
         if (!$producto) {
             return redirect()->route('productos.index')
                 ->with('error', $this->msg('gen.error'));
+        }
+
+        // ✅ BLOQUEO: si está INA no se puede editar
+        if ($producto->estado_prod === 'INA') {
+            return redirect()->route('productos.index')
+                ->with('error', $this->msg('M60'));
         }
 
         if ($request->pro_precio_venta === null || $request->pro_precio_venta === '') {
@@ -224,22 +237,7 @@ class ProductoController extends Controller
         }
 
         try {
-            $data = $request->except('pro_imagen');
-
-            if ($request->hasFile('pro_imagen')) {
-                $file = $request->file('pro_imagen');
-                $ext  = strtolower($file->getClientOriginalExtension());
-                $nombre = $id . '.' . $ext;
-
-                $file->storeAs('public/productos', $nombre);
-
-                if (!empty($producto->pro_imagen) && $producto->pro_imagen !== $nombre) {
-                    Storage::delete('public/productos/' . $producto->pro_imagen);
-                }
-
-                $data['pro_imagen'] = $nombre;
-            }
-
+            $data = $request->all();
             $producto->actualizarProductoTx($data);
 
             return redirect()->route('productos.index')
@@ -273,7 +271,7 @@ class ProductoController extends Controller
                 ->with('error', $this->msg('gen.error'));
         }
 
-        // Si no está ACT, operación no permitida en ese estado
+        // ✅ Si no está ACT, no se puede inactivar otra vez
         if ($producto->estado_prod !== 'ACT') {
             return redirect()->route('productos.index')
                 ->with('error', $this->msg('M60'));
@@ -283,7 +281,7 @@ class ProductoController extends Controller
             $producto->inactivarProductoTx();
 
             return redirect()->route('productos.index')
-                ->with('ok', $this->msg('M3')); // Registro eliminado
+                ->with('ok', $this->msg('M3')); // Registro inactivado (mensaje genérico "eliminado")
 
         } catch (\Exception $e) {
 
@@ -348,6 +346,7 @@ class ProductoController extends Controller
                 'unidades' => $unidades,
                 'productoEditar' => null,
                 'productoEliminar' => null,
+                'productoVer' => null,
                 'info' => $productos->count() === 0 ? $this->msg('M59') : null, // Sin resultados
             ]);
 
