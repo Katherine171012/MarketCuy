@@ -31,7 +31,7 @@
         {{-- Formulario dentro de una Card Estética --}}
         <div class="card border-0 shadow-sm rounded-3">
             <div class="card-header bg-white py-3 border-bottom">
-                <h6 class="m-0 fw-bold text-concho text-uppercase small">Datos del Formulario</h6>
+                <h6 class="m-0 fw-bold text-concho text-uppercase small">Datos del Cliente </h6>
             </div>
             <div class="card-body p-4">
                 <form method="POST" action="{{ route('clientes.store') }}">

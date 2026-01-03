@@ -3,7 +3,7 @@
 use App\Http\Controllers\ClienteController;
 use Illuminate\Support\Facades\Route;
 
-// Ahora la raíz del sitio carga la portada directamente
+
 Route::get('/', function () {
     return view('layouts.portada');
 })->name('home');
@@ -15,7 +15,6 @@ Route::get('/home', function () {
 
 
 
-// 1. RUTAS ESTÁTICAS (Deben ir primero)
 Route::get('/clientes', [ClienteController::class, 'index'])
     ->name('clientes.index');
 
@@ -35,9 +34,6 @@ Route::post('/clientes', [ClienteController::class, 'store'])
     ->name('clientes.store');
 
 
-// 2. RUTAS DINÁMICAS (Usan {cliente}, deben ir al final)
-
-// Ver detalle (Solo lectura)
 Route::get('/clientes/{cliente}/detalle', [ClienteController::class, 'verDetalle'])
     ->name('clientes.detalle');
 
@@ -48,7 +44,6 @@ Route::get('/clientes/{cliente}/editar', [ClienteController::class, 'edit'])
 Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])
     ->name('clientes.update');
 
-// Eliminar cliente (Confirmación en cuadrito sobre index)
 Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])
     ->name('clientes.show');
 

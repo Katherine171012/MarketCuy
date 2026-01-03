@@ -205,6 +205,19 @@ class ClienteController extends Controller
             return back()->with('codigo_mensaje', 'E3');
         }
     }
+    public function verDetalle(Cliente $cliente)
+    {
 
+        $porPagina = request('per_page', 10);
+        $clientes = Cliente::obtenerParaLista($porPagina)->withQueryString();
+
+        $ciudades = Ciudad::all();
+
+        return view('clientes.index', [
+            'clientes' => $clientes,
+            'clienteDetalle' => $cliente,
+            'ciudades' => $ciudades
+        ]);
+    }
 
 }
