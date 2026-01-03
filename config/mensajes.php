@@ -122,4 +122,22 @@ return [
     'E18' => 'Error de acceso a datos.',
     'E19' => 'Error en la carga de configuraciones.',
     'E20' => 'Error en la sincronización de procesos.',
+    'gen.error' => 'Ocurrió un error inesperado.',
+
+    // Aliases del módulo productos (compatibilidad con tu controller viejo)
+    'productos.crear.ok'        => 'El registro se guardó correctamente.',   // M1
+    'productos.actualizar.ok'   => 'El registro se actualizó correctamente.',// M2
+    'productos.eliminar.ok'     => 'El registro fue eliminado correctamente.',// M3
+    'productos.no.disponible'   => 'La operación no se puede realizar en el estado actual.', // M60
+    'productos.duplicado'       => 'El producto ya existe en el sistema.',   // M26
+    'productos.sin.registros'   => 'No se encontraron resultados con los criterios ingresados.', // M59
+    'productos.sin.coincidencias'=> 'No se encontraron resultados con los criterios ingresados.', // M59
+    'productos.producto.vacio'  => 'Ingrese el nombre del producto.',        // M25
+    'productos.precio.vacio'    => 'Ingrese el precio del producto.',        // M29
+    'productos.precio.invalido' => 'El precio debe ser un valor numérico.',  // M30
+    'productos.precio.negativo' => 'El precio no puede ser un valor negativo.', // M31
+    'productos.stock.invalido'  => 'La cantidad ingresada no es válida.',    // M35
+    'productos.parametro.vacio' => 'Ingrese un criterio para realizar la búsqueda.', // M57
+    'productos.parametro.invalido' => 'El criterio ingresado no es válido.', // M58
 ];
+

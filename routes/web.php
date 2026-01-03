@@ -1,9 +1,16 @@
 <?php
 
-use App\Http\Controllers\ClienteController;
 use Illuminate\Support\Facades\Route;
 
-// Ahora la raíz del sitio carga la portada directamente
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\ClienteController;
+
+/*
+|--------------------------------------------------------------------------
+| HOME / PORTADA
+|--------------------------------------------------------------------------
+| Raíz del sitio carga la portada directamente.
+*/
 Route::get('/', function () {
     return view('layouts.portada');
 })->name('home');
@@ -12,8 +19,13 @@ Route::get('/home', function () {
     return redirect()->route('home');
 });
 
-
-
+/*
+|--------------------------------------------------------------------------
+| CLIENTES (código de tu compañera)
+|--------------------------------------------------------------------------
+| 1) Rutas estáticas primero
+| 2) Rutas dinámicas al final
+*/
 
 // 1. RUTAS ESTÁTICAS (Deben ir primero)
 Route::get('/clientes', [ClienteController::class, 'index'])
@@ -34,7 +46,6 @@ Route::post('/clientes/buscar', [ClienteController::class, 'buscar'])
 Route::post('/clientes', [ClienteController::class, 'store'])
     ->name('clientes.store');
 
-
 // 2. RUTAS DINÁMICAS (Usan {cliente}, deben ir al final)
 
 // Ver detalle (Solo lectura)
@@ -54,3 +65,43 @@ Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])
 
 Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])
     ->name('clientes.destroy');
+
+
+/*
+|--------------------------------------------------------------------------
+| PRODUCTOS (tu módulo)
+|--------------------------------------------------------------------------
+| Mantengo tus rutas EXACTAS para no romper nada.
+*/
+Route::prefix('productos')->group(function () {
+
+    // tu entrada actual /productos/menu manda a la PORTADA
+    Route::get('/menu', function () {
+        return redirect()->route('home');
+    })->name('productos.menu');
+
+    Route::get('/consultar', function () {
+        return redirect()->route('home');
+    })->name('productos.consultar');
+
+    // PANTALLA PRINCIPAL DEL MÓDULO
+    Route::get('/', [ProductoController::class, 'index'])
+        ->name('productos.index');
+
+    // CRUD
+    Route::post('/guardar', [ProductoController::class, 'store'])
+        ->name('productos.store');
+
+    // Buscar (GET para paginación)
+    Route::get('/buscar', [ProductoController::class, 'buscar'])
+        ->name('productos.buscar');
+
+    Route::post('/buscar', [ProductoController::class, 'buscar'])
+        ->name('productos.buscar.post');
+
+    Route::put('/{id}', [ProductoController::class, 'update'])
+        ->name('productos.update');
+
+    Route::delete('/{id}', [ProductoController::class, 'destroy'])
+        ->name('productos.destroy');
+});
