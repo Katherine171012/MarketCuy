@@ -2,10 +2,9 @@
 
 @section('titulo', 'MarketCuy')
 
-@section('content') {{-- <--- CAMBIADO de 'contenido' a 'content' para que funcione --}}
+@section('content')
 
 <style>
-    /* Ajustes solo para la portada */
     .card-modulo {
         min-height: 220px;
     }
@@ -33,10 +32,8 @@
         </p>
     </div>
 
-    {{-- GRID GRANDE 2x2 --}}
     <div class="row g-5 justify-content-center">
 
-        {{-- CLIENTES --}}
         <div class="col-12 col-md-6 col-xl-5">
             <div class="card shadow card-modulo border-0 text-center">
                 <div class="card-body p-4">
@@ -54,7 +51,6 @@
             </div>
         </div>
 
-        {{-- PRODUCTOS --}}
         <div class="col-12 col-md-6 col-xl-5">
             <div class="card shadow card-modulo border-0 text-center">
                 <div class="card-body p-4">
@@ -70,7 +66,6 @@
             </div>
         </div>
 
-        {{-- FACTURAS --}}
         <div class="col-12 col-md-6 col-xl-5">
             <div class="card shadow card-modulo border-0 text-center">
                 <div class="card-body p-4">
@@ -86,7 +81,6 @@
             </div>
         </div>
 
-        {{-- PROVEEDORES --}}
         <div class="col-12 col-md-6 col-xl-5">
             <div class="card shadow card-modulo border-0 text-center">
                 <div class="card-body p-4">

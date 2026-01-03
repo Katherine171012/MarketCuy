@@ -181,7 +181,6 @@ class ClienteController extends Controller
     }
     public function buscar(Request $request)
     {
-        // Decidimos qué valor tomar: si es ciudad, tomamos 'valor_ciudad', si no, 'valor_texto'
         $valor = ($request->campo === 'id_ciudad') ? $request->valor_ciudad : $request->valor_texto;
 
         if (!$request->filled('campo') || empty($valor)) {
@@ -191,7 +190,6 @@ class ClienteController extends Controller
         try {
             $porPagina = $request->get('per_page', 10);
 
-            // Llamamos al modelo con el valor correcto
             $clientes = Cliente::consultarPorParametro($request->campo, $valor, $porPagina)->withQueryString();
 
             if ($clientes->isEmpty()) {

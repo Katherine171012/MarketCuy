@@ -1,6 +1,5 @@
-{{-- PANEL DE EDICIÓN ESTILO MARKET CUY (Para ser incluido en el index) --}}
 <div class="card border-0 shadow-sm rounded-3 mb-4">
-    {{-- Encabezado amarillo como tu imagen de referencia --}}
+
     <div class="card-header py-2" style="background-color: #660404; border-bottom: 1px solid #660404;">
         <span class="fw-bold text-white small">Editando Cliente: {{ $clienteEdit->id_cliente }}</span>
     </div>
@@ -54,7 +53,6 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                {{-- Botón Guardar Cambios Amarillo --}}
                 <button type="submit" class="btn btn-sm fw-bold px-4 py-2 shadow-sm" style="background-color: #660404; color: #ffffff; border: none; border-radius: 6px;">
                     Guardar Cambios
                 </button>
