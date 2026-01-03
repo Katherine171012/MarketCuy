@@ -6,24 +6,13 @@
 
     <style>
         /* Ajustes solo para la portada */
-        .card-modulo {
-            min-height: 220px;
-        }
-        .card-modulo h5 {
-            font-size: 1.25rem;
-        }
-        .card-modulo p {
-            font-size: 0.95rem;
-        }
-        .btn-modulo {
-            padding: 12px 16px;
-            font-size: 1rem;
-            border-radius: 8px;
-        }
+        .card-modulo { min-height: 220px; }
+        .card-modulo h5 { font-size: 1.25rem; }
+        .card-modulo p { font-size: 0.95rem; }
+        .btn-modulo { padding: 12px 16px; font-size: 1rem; border-radius: 8px; }
     </style>
 
     <div class="py-4">
-
         <div class="text-center mb-5">
             <h1 class="display-5 fw-bold mb-2" style="color:#660404;">
                 MarketCuy
@@ -33,7 +22,6 @@
             </p>
         </div>
 
-        {{-- GRID GRANDE 2x2 --}}
         <div class="row g-5 justify-content-center">
 
             {{-- CLIENTES --}}
@@ -47,7 +35,7 @@
                         <hr>
                         <a href="{{ route('clientes.index') }}"
                            class="btn text-white w-100 btn-modulo"
-                           style="background-color: #660404;">
+                           style="background-color:#660404;">
                             Entrar a Clientes
                         </a>
                     </div>
@@ -65,7 +53,7 @@
                         <hr>
                         <a href="{{ route('productos.index') }}"
                            class="btn text-white w-100 btn-modulo"
-                           style="background-color: #660404;">
+                           style="background-color:#660404;">
                             Entrar a Productos
                         </a>
                     </div>
@@ -81,9 +69,17 @@
                             <p class="text-muted mb-0">Ventas, cobros y emisión</p>
                         </div>
                         <hr>
-                        <button class="btn btn-outline-dark w-100 btn-modulo" disabled>
-                            Módulo aún no conectado
-                        </button>
+                        @if(\Illuminate\Support\Facades\Route::has('facturas.index'))
+                            <a href="{{ route('facturas.index') }}"
+                               class="btn text-white w-100 btn-modulo"
+                               style="background-color:#660404;">
+                                Entrar a Facturas
+                            </a>
+                        @else
+                            <button class="btn btn-outline-dark w-100 btn-modulo" disabled>
+                                Módulo aún no conectado
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -97,9 +93,17 @@
                             <p class="text-muted mb-0">Registro y control de proveedores</p>
                         </div>
                         <hr>
-                        <button class="btn btn-outline-dark w-100 btn-modulo" disabled>
-                            Módulo aún no conectado
-                        </button>
+                        @if(\Illuminate\Support\Facades\Route::has('proveedores.index'))
+                            <a href="{{ route('proveedores.index') }}"
+                               class="btn text-white w-100 btn-modulo"
+                               style="background-color:#660404;">
+                                Entrar a Proveedores
+                            </a>
+                        @else
+                            <button class="btn btn-outline-dark w-100 btn-modulo" disabled>
+                                Módulo aún no conectado
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>
