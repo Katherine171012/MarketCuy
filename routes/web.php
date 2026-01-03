@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProveedorController;
+use App\Http\Controllers\FacturaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -125,4 +126,40 @@ Route::prefix('proveedores')->group(function () {
     // Eliminar lógico (DELETE)
     Route::delete('/{proveedor}', [ProveedorController::class, 'destroy'])
         ->name('proveedores.destroy');
+});
+
+Route::prefix('facturas')->group(function () {
+
+    // F5.4.1 – Consulta general (pantalla principal)
+    Route::get('/', [FacturaController::class, 'index'])
+        ->name('facturas.index');
+
+    // F5.1 – Generar factura
+    Route::get('/crear', [FacturaController::class, 'create'])
+        ->name('facturas.create');
+
+    Route::post('/', [FacturaController::class, 'store'])
+        ->name('facturas.store');
+
+    // F5.x – Aprobar factura
+    Route::post('/{idFactura}/aprobar', [FacturaController::class, 'aprobar'])
+        ->name('facturas.aprobar');
+
+    // F5.2 – Modificar factura
+    Route::get('/{idFactura}/editar', [FacturaController::class, 'edit'])
+        ->name('facturas.edit');
+
+    Route::put('/{idFactura}', [FacturaController::class, 'update'])
+        ->name('facturas.update');
+
+    // F5.3 – Anular factura
+    Route::delete('/{idFactura}/anular', [FacturaController::class, 'destroy'])
+        ->name('facturas.anular');
+
+    // F5.4.2 – Buscar por parámetros
+    Route::get('/buscar', [FacturaController::class, 'buscar'])
+        ->name('facturas.buscar');
+
+    Route::post('/buscar', [FacturaController::class, 'ejecutarBusqueda'])
+        ->name('facturas.buscar.ejecutar');
 });

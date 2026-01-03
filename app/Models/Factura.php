@@ -221,14 +221,15 @@ class Factura extends Model
      */
     public static function generarSiguienteId(): string
     {
-        $maxNum = self::whereRaw("id_factura ~ '^FAC[0-9]+$'")
+        $maxNum = self::whereRaw("id_factura ~ '^FCT[0-9]+$'")
             ->selectRaw("MAX(CAST(SUBSTRING(id_factura FROM 4) AS INTEGER)) AS max_num")
             ->value('max_num');
 
         $nextNum = ($maxNum !== null) ? ((int)$maxNum + 1) : 1;
 
-        return 'FAC' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        return 'FCT' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
     }
+
 
     /**
      * F5.1 – Crear factura

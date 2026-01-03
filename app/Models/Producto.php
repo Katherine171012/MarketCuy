@@ -42,6 +42,13 @@ class Producto extends Model
         );
     }
 
+    public static function obtenerActivos()
+    {
+        return self::where('estado_prod', 'ACT')
+            ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
+            ->get();
+    }
+
     public function unidadVenta()
     {
         return $this->belongsTo(
