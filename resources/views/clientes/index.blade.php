@@ -3,7 +3,7 @@
 @section('content')
     <nav class="navbar navbar-expand-lg navbar-dark bg-concho mb-4 shadow-sm">
         <div class="container">
-            <span class="navbar-brand fw-bold font-monospace">MarketCuy</span>
+            <a href="{{ route('home') }}" class="navbar-brand fw-bold font-monospace text-decoration-none">MarketCuy</a>
             <div class="navbar-nav ms-auto">
                 <span class="nav-link disabled text-white-50 small">Clientes</span>
             </div>
