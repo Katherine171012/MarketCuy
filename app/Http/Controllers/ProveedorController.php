@@ -38,7 +38,6 @@ class ProveedorController extends Controller
             'ciudades'
         ));
     }
-
     public function create()
     {
         $ciudades = Ciudad::query()->orderBy('ciu_descripcion')->get();
@@ -46,7 +45,6 @@ class ProveedorController extends Controller
 
         return view('proveedores.create', compact('ciudades', 'idProveedor'));
     }
-
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -65,16 +63,13 @@ class ProveedorController extends Controller
             'prv_telefono.regex'  => config('mensajes.M21'),
             'prv_celular.regex'   => config('mensajes.M21'),
         ]);
-
         if (Proveedor::existeRuc($data['prv_ruc_ced'])) {
             return redirect()->route('proveedores.create')
                 ->withInput()
                 ->with($this->msg('M15', 'warning'));
         }
-
         try {
             Proveedor::registrar($data);
-
             return redirect()->route('proveedores.index')
                 ->with($this->msg('M1', 'success'));
         } catch (\Throwable $e) {
@@ -83,7 +78,6 @@ class ProveedorController extends Controller
                 ->with($this->msg('E12', 'danger'));
         }
     }
-
     public function edit($id)
     {
         return redirect()->route('proveedores.index', array_merge(request()->query(), [
@@ -92,7 +86,6 @@ class ProveedorController extends Controller
             'delete' => null
         ]));
     }
-
     public function update(Request $request, $id)
     {
         $id = trim((string) $id);
@@ -102,7 +95,6 @@ class ProveedorController extends Controller
             return redirect()->route('proveedores.index')
                 ->with($this->msg('M60', 'warning'));
         }
-
         $data = $request->validate([
             'prv_nombre'    => ['required', 'string', 'max:40'],
             'prv_ruc_ced'   => ['required', 'regex:/^\d{10}(\d{3})?$/'],
@@ -119,13 +111,11 @@ class ProveedorController extends Controller
             'prv_telefono.regex'  => config('mensajes.M21'),
             'prv_celular.regex'   => config('mensajes.M21'),
         ]);
-
         if (Proveedor::existeRuc($data['prv_ruc_ced'], $id)) {
             return redirect()->route('proveedores.index', array_merge(request()->query(), ['edit' => $id]))
                 ->withInput()
                 ->with($this->msg('M15', 'warning'));
         }
-
         try {
             $proveedor->aplicarCambios($data);
 
@@ -137,13 +127,12 @@ class ProveedorController extends Controller
                 ->with($this->msg('E12', 'danger'));
         }
     }
-
     public function destroy($id)
     {
-        $id = trim((string) $id);
+        $id = trim((string)$id);
         $proveedor = Proveedor::findOrFail($id);
 
-        if (trim((string) $proveedor->estado_prv) !== 'ACT') {
+        if (trim((string)$proveedor->estado_prv) !== 'ACT') {
             return redirect()->route('proveedores.index')
                 ->with($this->msg('M60', 'warning'));
         }
@@ -158,8 +147,7 @@ class ProveedorController extends Controller
                 ->with($this->msg('E12', 'danger'));
         }
     }
-
-    // Mensajería estándar (config/mensajes.php)
+    // Mensajería de config/mensajes.php
     private function msg(string $codigo, string $tipo): array
     {
         return [

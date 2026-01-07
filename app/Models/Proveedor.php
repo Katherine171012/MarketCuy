@@ -13,7 +13,6 @@ class Proveedor extends Model
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
-
     protected $fillable = [
         'id_proveedor',
         'prv_nombre',
@@ -26,13 +25,11 @@ class Proveedor extends Model
         'estado_prv',
         'fecha_ingreso',
     ];
-
     public function ciudad()
     {
         return $this->belongsTo(Ciudad::class, 'id_ciudad', 'id_ciudad');
     }
-
-    // Genera PRV0001, PRV0002... de forma robusta (char(7) con espacios)
+    // Genera PRV....
     public static function generarNuevoId(): string
     {
         $maxNum = self::query()
@@ -44,8 +41,7 @@ class Proveedor extends Model
 
         return 'PRV' . str_pad((string) $num, 4, '0', STR_PAD_LEFT);
     }
-
-    // Verifica duplicidad de RUC/Cédula (con TRIM porque son char)
+    // Verifica duplicidad de RUC/Cédula
     public static function existeRuc(string $ruc, ?string $excluirId = null): bool
     {
         $ruc = trim($ruc);
@@ -59,8 +55,7 @@ class Proveedor extends Model
 
         return $q->exists();
     }
-
-    // Construye la consulta de Index con filtro y orden
+    // Construye la consulta de index
     public static function construirQueryIndex(?string $parametro, string $valor, ?string $orden)
     {
         $valor = trim((string) $valor);
@@ -69,11 +64,9 @@ class Proveedor extends Model
 
         $query = self::query()
             ->with('ciudad')
-            // ACT primero, luego INA (por ser char(3) usamos TRIM)
+            // ACT primero
             ->orderByRaw("CASE WHEN TRIM(estado_prv) = 'ACT' THEN 0 ELSE 1 END")
-            // orden base estable (por si no eligen orden)
             ->orderBy('id_proveedor');
-
         // Filtro por parámetro
         if ($parametro && $valor !== '') {
             if ($parametro === 'nombre') {
@@ -91,7 +84,6 @@ class Proveedor extends Model
             }
         }
 
-        // Orden adicional
         if ($orden === 'nombre') {
             $query->orderBy('prv_nombre');
         } elseif ($orden === 'estado') {
@@ -100,9 +92,7 @@ class Proveedor extends Model
 
         return $query;
     }
-
-
-    // Crea proveedor con transacción (ID + estado ACT + fecha actual)
+    // Crea proveedor con transacción usando ID mas estado ACT mas fecha actual)
     public static function registrar(array $data): self
     {
         return DB::transaction(function () use ($data) {
@@ -122,8 +112,7 @@ class Proveedor extends Model
             ]);
         });
     }
-
-    // Actualiza proveedor con transacción (solo campos editables)
+    // Actualiza proveedor con transacción solo campos editables
     public function aplicarCambios(array $data): void
     {
         DB::transaction(function () use ($data) {
@@ -138,8 +127,7 @@ class Proveedor extends Model
             ]);
         });
     }
-
-    // Inactiva (eliminar lógico)
+    // Eliminado logico
     public function inactivar(): void
     {
         DB::transaction(function () {
