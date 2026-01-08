@@ -1,6 +1,6 @@
 <div class="card border-0 shadow-sm">
     <div class="card-header fw-semibold text-white" style="background:#660404;">
-    Editando Producto: {{ $productoEditar->id_producto }}
+        Editando Producto: {{ $productoEditar->id_producto }}
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('productos.update', $productoEditar->id_producto) }}" enctype="multipart/form-data">
