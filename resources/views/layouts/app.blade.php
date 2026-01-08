@@ -14,11 +14,9 @@
 
     <style>
         body { background-color: #f8f9fa; }
-
         /* ===== PALETA CONCHO ===== */
         .bg-dark { background-color: #660404 !important; }
         .bg-concho { background-color: #660404 !important; }
-
         /* Botón concho (por si lo usan en blades) */
         .btn-concho{
             background-color: #660404 !important;

@@ -7,6 +7,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\FacturaController;
 
+// Portada
 Route::get('/', function () {
     return view('layouts.portada');
 })->name('home');
@@ -15,6 +16,8 @@ Route::get('/home', function () {
     return redirect()->route('home');
 });
 
+
+//Cliente
 Route::get('/clientes', [ClienteController::class, 'index'])
     ->name('clientes.index');
 
@@ -49,6 +52,8 @@ Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])
 Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])
     ->name('clientes.destroy');
 
+
+//Productos
 Route::prefix('productos')->group(function () {
 
     Route::get('/menu', function () {
@@ -77,6 +82,7 @@ Route::prefix('productos')->group(function () {
     Route::delete('/{id}', [ProductoController::class, 'destroy'])
         ->name('productos.destroy');
 });
+//Proveedores
 
 Route::prefix('proveedores')->group(function () {
     Route::get('/', [ProveedorController::class, 'index'])
