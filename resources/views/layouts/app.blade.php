@@ -176,7 +176,15 @@
     @if(session('warning'))
         <div class="alert alert-warning">{{ session('warning') }}</div>
     @endif
-    @if(session('error'))
+
+    {{-- MENSAJE FRONTEND FACTURAS (stock) --}}
+    <div id="alerta-stock"
+         class="alert alert-warning py-2 border-0 shadow-sm small fw-bold mb-3"
+         style="display:none;">
+        {{ config('mensajes.M36') }}
+    </div>
+
+@if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 

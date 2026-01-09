@@ -82,10 +82,13 @@
                     </td>
                     <td>
                         <input type="number"
-                               name="productos[0][cantidad]"
+                               name="productos[${indexProducto}][cantidad]"
                                class="form-control form-control-sm text-center cantidad"
-                               min="1"
+                               min="0"
+                               value="0"
+                               disabled
                                oninput="actualizarSubtotal(this)">
+
                     </td>
                     <td class="text-end align-middle">
                         <strong class="subtotal">0.00</strong>
@@ -110,6 +113,12 @@
                 + Agregar producto
             </button>
         </div>
+
+        {{-- PAGINACIÓN --}}
+        <div class="d-flex justify-content-center mt-2">
+            <div id="paginacion-productos"></div>
+        </div>
+
 
         {{-- RESUMEN --}}
         <div class="row align-items-end">
@@ -236,13 +245,22 @@
             const fila = select.closest('.producto-item');
             const precio = select.options[select.selectedIndex].dataset.precio || 0;
 
+            const cantidad = fila.querySelector('.cantidad');
+
             fila.querySelector('.precio').textContent = parseFloat(precio).toFixed(2);
 
-            const cantidad = fila.querySelector('.cantidad');
-            if (cantidad.value) {
-                actualizarSubtotal(cantidad);
+            if (select.value) {
+                cantidad.disabled = false;
+                cantidad.value = 0;
+            } else {
+                cantidad.disabled = true;
+                cantidad.value = 0;
             }
+
+            fila.querySelector('.subtotal').textContent = '0.00';
+            actualizarTotales();
         }
+
 
         function actualizarSubtotal(input) {
             const fila = input.closest('.producto-item');
@@ -267,6 +285,102 @@
             document.getElementById('iva-general').textContent = iva.toFixed(2);
             document.getElementById('total-general').textContent = total.toFixed(2);
         }
+
+        const PAGE_SIZE = 10;
+        let currentPage = 1;
+
+        function renderPaginacion() {
+            const filas = document.querySelectorAll('.producto-item');
+            const totalPaginas = Math.ceil(filas.length / PAGE_SIZE) || 1;
+
+            if (currentPage > totalPaginas) currentPage = totalPaginas;
+
+            filas.forEach((fila, index) => {
+                const inicio = (currentPage - 1) * PAGE_SIZE;
+                const fin = currentPage * PAGE_SIZE;
+
+                fila.style.display =
+                    index >= inicio && index < fin ? '' : 'none';
+            });
+
+            dibujarControles(totalPaginas);
+        }
+
+
+        const originalAgregarProducto = agregarProducto;
+
+        agregarProducto = function () {
+            originalAgregarProducto();
+            currentPage = Math.ceil(
+                document.querySelectorAll('.producto-item').length / PAGE_SIZE
+            );
+            renderPaginacion();
+        };
+
+        document.addEventListener('DOMContentLoaded', renderPaginacion);
+
+        function dibujarControles(totalPaginas) {
+            const contenedor = document.getElementById('paginacion-productos');
+            contenedor.innerHTML = '';
+
+            if (totalPaginas <= 1) return;
+
+            const ul = document.createElement('ul');
+            ul.className = 'pagination pagination-sm';
+
+            // Anterior
+            ul.appendChild(
+                crearBoton('«', currentPage > 1, () => {
+                    currentPage--;
+                    renderPaginacion();
+                })
+            );
+
+            // Números
+            for (let i = 1; i <= totalPaginas; i++) {
+                ul.appendChild(
+                    crearBoton(i, true, () => {
+                        currentPage = i;
+                        renderPaginacion();
+                    }, i === currentPage)
+                );
+            }
+
+            // Siguiente
+            ul.appendChild(
+                crearBoton('»', currentPage < totalPaginas, () => {
+                    currentPage++;
+                    renderPaginacion();
+                })
+            );
+
+            contenedor.appendChild(ul);
+        }
+
+
+        function crearBoton(texto, habilitado, accion, activo = false) {
+            const li = document.createElement('li');
+            li.className = 'page-item';
+
+            if (!habilitado) li.classList.add('disabled');
+            if (activo) li.classList.add('active');
+
+            const a = document.createElement('a');
+            a.className = 'page-link';
+            a.href = '#';
+            a.textContent = texto;
+
+            a.onclick = (e) => {
+                e.preventDefault();
+                if (habilitado) accion();
+            };
+
+            li.appendChild(a);
+            return li;
+        }
+
+
+
     </script>
 
 @endsection

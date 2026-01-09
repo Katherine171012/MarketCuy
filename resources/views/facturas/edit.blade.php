@@ -138,6 +138,9 @@
                 </div>
             @endif
 
+            <div class="d-flex justify-content-center mt-2" id="paginacion-productos"></div>
+
+
             {{-- RESUMEN --}}
             <div class="row align-items-end">
                 <div class="col-md-4">
@@ -271,9 +274,95 @@
             const msgSeleccioneProducto = "Seleccione un producto";
             const msgQuitar = "Quitar";
 
+            const PAGE_SIZE = 10;
+            let currentPage = 1;
+
+            function renderPaginacion() {
+                const filas = document.querySelectorAll('.producto-item');
+                const totalPaginas = Math.ceil(filas.length / PAGE_SIZE) || 1;
+
+                if (currentPage > totalPaginas) {
+                    currentPage = totalPaginas;
+                }
+
+                filas.forEach((fila, index) => {
+                    const inicio = (currentPage - 1) * PAGE_SIZE;
+                    const fin = currentPage * PAGE_SIZE;
+
+                    fila.style.display =
+                        (index >= inicio && index < fin) ? '' : 'none';
+                });
+
+                dibujarControles(totalPaginas);
+            }
+
+            function dibujarControles(totalPaginas) {
+                const contenedor = document.getElementById('paginacion-productos');
+                contenedor.innerHTML = '';
+
+                if (totalPaginas <= 1) return;
+
+                const nav = document.createElement('ul');
+                nav.className = 'pagination pagination-sm';
+
+                // Botón Anterior
+                nav.appendChild(
+                    crearBoton('«', currentPage > 1, () => {
+                        currentPage--;
+                        renderPaginacion();
+                    })
+                );
+
+                // Números de página
+                for (let i = 1; i <= totalPaginas; i++) {
+                    nav.appendChild(
+                        crearBoton(i, true, () => {
+                            currentPage = i;
+                            renderPaginacion();
+                        }, i === currentPage)
+                    );
+                }
+
+                // Botón Siguiente
+                nav.appendChild(
+                    crearBoton('»', currentPage < totalPaginas, () => {
+                        currentPage++;
+                        renderPaginacion();
+                    })
+                );
+
+                contenedor.appendChild(nav);
+            }
+
+            function crearBoton(texto, habilitado, accion, activo = false) {
+                const li = document.createElement('li');
+                li.className = 'page-item';
+
+                if (!habilitado) li.classList.add('disabled');
+                if (activo) li.classList.add('active');
+
+                const a = document.createElement('a');
+                a.className = 'page-link';
+                a.href = '#';
+                a.textContent = texto;
+
+                a.onclick = (e) => {
+                    e.preventDefault();
+                    if (habilitado) accion();
+                };
+
+                li.appendChild(a);
+                return li;
+            }
+
+
             function agregarProducto() {
                 const tbody = document.getElementById('contenedor-productos');
                 const tr = document.createElement('tr');
+                currentPage = Math.ceil(
+                    document.querySelectorAll('.producto-item').length / PAGE_SIZE
+                );
+                renderPaginacion();
                 tr.classList.add('producto-item');
 
                 tr.innerHTML = `
@@ -323,7 +412,9 @@
             function eliminarProducto(btn) {
                 btn.closest('.producto-item').remove();
                 actualizarTotales();
+                renderPaginacion();
             }
+
 
             function actualizarPrecio(select) {
                 const fila = select.closest('.producto-item');
@@ -365,6 +456,11 @@
                 document.getElementById('iva-general').textContent = iva.toFixed(2);
                 document.getElementById('total-general').textContent = total.toFixed(2);
             }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                renderPaginacion();
+            });
+
         </script>
     @endif
 
