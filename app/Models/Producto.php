@@ -28,6 +28,7 @@ class Producto extends Model
         'pro_saldo_final',
         'estado_prod',
         'pro_categoria',
+        'pro_imagen',
     ];
     public function unidadCompra()
     {
@@ -164,6 +165,7 @@ class Producto extends Model
             'pro_saldo_final'   => $data['pro_saldo_inicial'],
             'estado_prod'       => 'ACT',
             'pro_categoria'     => $data['pro_categoria'] ?? null,
+            'pro_imagen'        => $data['pro_imagen'] ?? null,
         ]);
     }
     public function actualizarProducto(array $data)

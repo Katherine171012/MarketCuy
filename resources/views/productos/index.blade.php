@@ -190,10 +190,10 @@
                 </tbody>
             </table>
         </div>
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-
+        <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
             <form method="GET" action="{{ url()->current() }}" class="d-flex align-items-center gap-2">
                 <label class="small text-muted">Mostrar</label>
+
                 @foreach(request()->except(['page','per_page']) as $k => $v)
                     @if(is_array($v))
                         @foreach($v as $vv)
@@ -212,15 +212,15 @@
                 </select>
 
                 <span class="small text-muted">registros</span>
-
-                <div class="text-center">
-                    @if($productos->total() > 0)
-                        <span class="small text-muted fw-bold">
-                            Mostrando {{ $productos->lastItem() }} de {{ $productos->total() }} registros
-                        </span>
-                    @endif
-                </div>
             </form>
+
+            <div class="flex-grow-1 text-center">
+                @if($productos->total() > 0)
+                    <span class="small text-muted fw-bold">
+                Mostrando {{ $productos->lastItem() }} de {{ $productos->total() }} registros
+            </span>
+                @endif
+            </div>
         </div>
 
         <div class="d-flex justify-content-center mt-4">

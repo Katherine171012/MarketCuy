@@ -13,7 +13,8 @@ class UnidadMedida extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_unidad_medida'
+        'id_unidad_medida',
+        'um_descripcion'
     ];
     public static function listar()
     {

@@ -6,6 +6,7 @@ use App\Models\Producto;
 use App\Models\UnidadMedida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ProductoController extends Controller
 {
@@ -22,13 +23,10 @@ class ProductoController extends Controller
     }
     public function index(Request $request)
     {
-        // ✅ per_page (pedido jefa)
         $perPage = (int) $request->get('per_page', 10);
         if (!in_array($perPage, [10, 25, 50, 100], true)) {
             $perPage = 10;
         }
-
-        // ✅ método estilo jefa (orden por estado + id) (ACT primero, INA al final) -> lo controlas en el Model
         $productos = Producto::obtenerParaLista($perPage);
         $productos->appends($request->except('page'));
 
@@ -77,7 +75,6 @@ class ProductoController extends Controller
             'productoEditar' => $productoEditar,
             'productoEliminar' => $productoEliminar,
             'productoVer' => $productoVer,
-            // si no hay registros en la lista principal, usamos "Sin resultados"
             'info' => $productos->count() === 0 ? $this->msg('M59') : null,
         ]);
     }
@@ -132,12 +129,44 @@ class ProductoController extends Controller
                 'pro_descripcion' => $this->msg('M26')
             ])->withInput();
         }
+        if ($request->hasFile('pro_imagen')) {
+
+            $file = $request->file('pro_imagen');
+
+            $ext = strtolower($file->getClientOriginalExtension());
+
+            if (!in_array($ext, ['jpg', 'jpeg', 'pdf'], true)) {
+                return back()->withErrors([
+                    'pro_imagen' => 'Solo se permiten archivos JPG o PDF.'
+                ])->withInput();
+            }
+        }
 
         try {
             $nuevoId = Producto::generarSiguienteId();
 
             $data = $request->all();
             $data['id_producto'] = $nuevoId;
+
+            // ✅ IMAGEN: guardar con nombre = ID del producto (P1000, P1001...)
+            if ($request->hasFile('pro_imagen') && $request->file('pro_imagen')->isValid()) {
+
+                $file = $request->file('pro_imagen');
+
+                // extensión real del archivo (jpg, png, webp, etc.)
+                $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+
+                // nombre final: P1005.jpg (o png, etc.)
+                $filename = $nuevoId . '.' . $ext;
+
+                // se guarda en: storage/app/public/productos/P1005.jpg
+                // y se registra en BD como: productos/P1005.jpg
+                $path = $file->storeAs('productos', $filename, 'public');
+
+                $data['pro_imagen'] = $path;
+            } else {
+                $data['pro_imagen'] = null;
+            }
 
             Producto::crearProductoTx($data);
 
@@ -147,9 +176,9 @@ class ProductoController extends Controller
         } catch (\Exception $e) {
 
             Log::error('ProductoController@store ERROR', [
-                'msg'   => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
+                'msg' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -158,7 +187,7 @@ class ProductoController extends Controller
                 ->withInput();
         }
     }
-    public function update(Request $request, $id)
+        public function update(Request $request, $id)
     {
         $producto = Producto::buscarPorId($id);
 
