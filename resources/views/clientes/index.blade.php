@@ -20,7 +20,9 @@
                 <a href="{{ route('clientes.create') }}" class="btn btn-concho btn-sm fw-bold px-3 py-2 shadow-sm">
                     + Crear nuevo cliente
                 </a>
-                <a href="{{ route('clientes.buscar.form') }}" class="btn btn-outline-secondary btn-sm fw-bold px-3 py-2 bg-white shadow-sm" style="color: #660404; border-color: #660404;">
+                <a href="{{ route('clientes.buscar.form') }}"
+                   class="btn btn-outline-secondary btn-sm fw-bold px-3 py-2 bg-white shadow-sm"
+                   style="color: #660404; border-color: #660404;">
                     Consulta por parámetro
                 </a>
             </div>
@@ -29,7 +31,7 @@
             @include('clientes.edit', ['cliente' => $clienteEdit])
         @endif
         @if(isset($clienteDelete))
-            @include('clientes.show', ['cliente' => $clienteDelete])
+            @include('clientes.eliminar', ['cliente' => $clienteDelete])
         @endif
         @if(isset($busquedaActiva))
             @include('clientes.buscar')
@@ -42,7 +44,8 @@
         @endif
 
         @if(isset($clienteDetalle))
-            <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden" style="border: 1px solid #660404 !important;">
+            <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden"
+                 style="border: 1px solid #660404 !important;">
                 <div class="card-header py-2 text-white" style="background-color: #660404;">
             <span class="fw-bold small text-uppercase">
                 <i class="fas fa-eye me-2"></i>Información del Cliente (Solo Lectura): {{ $clienteDetalle->id_cliente }}
@@ -53,41 +56,52 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label small fw-bold text-muted mb-1 text-uppercase">ID Cliente</label>
-                            <input type="text" value="{{ $clienteDetalle->id_cliente }}" class="form-control bg-light border-0" readonly>
+                            <input type="text" value="{{ $clienteDetalle->id_cliente }}"
+                                   class="form-control bg-light border-0" readonly>
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Identificación</label>
-                            <input type="text" value="{{ $clienteDetalle->cli_ruc_ced }}" class="form-control bg-light border-0" readonly>
+                            <label
+                                class="form-label small fw-bold text-muted mb-1 text-uppercase">Identificación</label>
+                            <input type="text" value="{{ $clienteDetalle->cli_ruc_ced }}"
+                                   class="form-control bg-light border-0" readonly>
                         </div>
 
                         <div class="col-md-12">
-                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Nombre Completo</label>
-                            <input type="text" value="{{ $clienteDetalle->cli_nombre }}" class="form-control bg-light border-0 fw-bold" readonly>
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Nombre
+                                Completo</label>
+                            <input type="text" value="{{ $clienteDetalle->cli_nombre }}"
+                                   class="form-control bg-light border-0 fw-bold" readonly>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Ciudad</label>
-                            <input type="text" value="{{ $clienteDetalle->ciudad->ciu_descripcion ?? 'No asignada' }}" class="form-control bg-light border-0" readonly>
+                            <input type="text" value="{{ $clienteDetalle->ciudad->ciu_descripcion ?? 'No asignada' }}"
+                                   class="form-control bg-light border-0" readonly>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Correo Electrónico</label>
-                            <input type="text" value="{{ $clienteDetalle->cli_mail }}" class="form-control bg-light border-0" readonly>
+                            <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Correo
+                                Electrónico</label>
+                            <input type="text" value="{{ $clienteDetalle->cli_mail }}"
+                                   class="form-control bg-light border-0" readonly>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Celular</label>
-                            <input type="text" value="{{ $clienteDetalle->cli_celular }}" class="form-control bg-light border-0" readonly>
+                            <input type="text" value="{{ $clienteDetalle->cli_celular }}"
+                                   class="form-control bg-light border-0" readonly>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted mb-1 text-uppercase">Dirección</label>
-                            <input type="text" value="{{ $clienteDetalle->cli_direccion ?? 'N/A' }}" class="form-control bg-light border-0" readonly>
+                            <input type="text" value="{{ $clienteDetalle->cli_direccion ?? 'N/A' }}"
+                                   class="form-control bg-light border-0" readonly>
                         </div>
                     </div>
 
                     <div class="mt-4 pt-3 border-top">
-                        <a href="{{ route('clientes.index') }}" class="btn btn-secondary fw-bold px-5 py-2 shadow-sm" style="border-radius: 6px; background-color: #6c757d; border: none;">
+                        <a href="{{ route('clientes.index') }}" class="btn btn-secondary fw-bold px-5 py-2 shadow-sm"
+                           style="border-radius: 6px; background-color: #6c757d; border: none;">
                             Cerrar Vista
                         </a>
                     </div>
@@ -98,9 +112,9 @@
         <div class="card border-0 shadow-sm overflow-hidden">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 table-custom">
-                <thead >
-                    <tr >
-                        <th >ID</th>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
                         <th>Nombre del Cliente</th>
                         <th>Cédula / RUC</th>
                         <th>Ciudad</th>
@@ -128,7 +142,9 @@
                             <td class="text-center">
                                 @if($cliente->estado_cli == 'ACT')
                                     <div class="d-flex justify-content-center gap-1">
-                                        <a href="{{ route('clientes.edit', $cliente) }}" class="btn btn-sm fw-bold px-3 py-1" style="background-color: #ffc107; border:none; font-size: 0.75rem;">Editar</a>
+                                        <a href="{{ route('clientes.edit', $cliente) }}"
+                                           class="btn btn-sm fw-bold px-3 py-1"
+                                           style="background-color: #ffc107; border:none; font-size: 0.75rem;">Editar</a>
                                         <a href="{{ route('clientes.show', $cliente) }}"
                                            class="btn btn-danger btn-sm fw-bold px-3 py-1 shadow-sm"
                                            style="border: none; font-size: 0.75rem;">
@@ -137,7 +153,8 @@
                                     </div>
 
                                 @else
-                                    <a href="{{ route('clientes.detalle', $cliente) }}" class="text-muted small fw-bold text-decoration-none">
+                                    <a href="{{ route('clientes.detalle', $cliente) }}"
+                                       class="text-muted small fw-bold text-decoration-none">
                                         <i class="fas fa-eye me-1"></i> Visualizar
                                     </a>
                                 @endif
@@ -150,7 +167,7 @@
         </div>
         <br>
         @if(isset($clienteDelete))
-            @include('clientes.show', ['cliente' => $clienteDelete])
+            @include('clientes.eliminar', ['cliente' => $clienteDelete])
         @endif
         <form method="GET" action="{{ route('clientes.index') }}" class="d-flex align-items-center gap-2">
             <label class="small text-muted">Mostrar</label>
