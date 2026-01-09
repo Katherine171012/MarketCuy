@@ -28,11 +28,8 @@ class Producto extends Model
         'pro_saldo_final',
         'estado_prod',
         'pro_categoria',
+        'pro_imagen',
     ];
-
-    // =========================================================
-    // RELACIONES
-    // =========================================================
     public function unidadCompra()
     {
         return $this->belongsTo(
@@ -57,23 +54,10 @@ class Producto extends Model
             'id_unidad_medida'
         );
     }
-
-    // =========================================================
-    // QUERIES (✅ Todo aquí, nada en Controller)
-    // =========================================================
-
-    /** Query base: solo ACT */
     public static function queryActivos()
     {
         return self::query()->whereIn('estado_prod', ['ACT', 'INA']);
     }
-
-    /**
-     * ✅ NUEVO (pedido jefa): método tipo obtenerParaLista($porPagina)
-     * Ordena por estado y luego por ID numérico (P1000, P1001...)
-     * Estados adaptados a tu módulo Productos:
-     * ACT primero, INA después, PEN después, lo demás al final.
-     */
     public static function obtenerParaLista(int $porPagina = 10)
     {
         return self::query()
@@ -84,23 +68,17 @@ class Producto extends Model
             ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
             ->paginate($porPagina);
     }
-
-    /** Paginación por defecto (ACT + orden numérico) */
     public static function paginarActivos(int $perPage = 10)
     {
         return self::queryActivos()
             ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
             ->paginate($perPage);
     }
-
-    /** Buscar por ID para editar (solo wrapper, el controller no hace DB) */
     public static function buscarPorId(?string $id): ?self
     {
         if (!$id) return null;
         return self::find($id);
     }
-
-    /** Paginación con filtros (orden, categoria, unidad) */
     public static function paginarActivosConFiltros(
         ?string $orden,
         ?string $categoria,
@@ -116,8 +94,6 @@ class Producto extends Model
         if ($unidad !== null && $unidad !== '') {
             $query->where('pro_um_compra', $unidad);
         }
-
-        // default
         $orden = ($orden !== null && $orden !== '') ? $orden : 'id_asc';
 
         switch ($orden) {
@@ -144,10 +120,6 @@ class Producto extends Model
 
         return $query->paginate($perPage);
     }
-
-    // =========================================================
-    // VALIDACIONES / HELPERS
-    // =========================================================
     public static function existeDescripcion(string $desc): bool
     {
         return self::where('pro_descripcion', $desc)->exists();
@@ -173,10 +145,6 @@ class Producto extends Model
 
         return 'P' . ($max + 1);
     }
-
-    // =========================================================
-    // CRUD INTERNO
-    // =========================================================
     public static function crearProducto(array $data)
     {
         $idProducto = $data['id_producto'] ?? self::generarSiguienteId();
@@ -197,9 +165,9 @@ class Producto extends Model
             'pro_saldo_final'   => $data['pro_saldo_inicial'],
             'estado_prod'       => 'ACT',
             'pro_categoria'     => $data['pro_categoria'] ?? null,
+            'pro_imagen'        => $data['pro_imagen'] ?? null,
         ]);
     }
-
     public function actualizarProducto(array $data)
     {
         return $this->update([
@@ -220,10 +188,6 @@ class Producto extends Model
     {
         return $this->update(['estado_prod' => 'INA']);
     }
-
-    // =========================================================
-    // TRANSACCIONES
-    // =========================================================
     public static function crearProductoTx(array $data)
     {
         try {
@@ -236,7 +200,6 @@ class Producto extends Model
             throw $e;
         }
     }
-
     public function actualizarProductoTx(array $data)
     {
         try {
@@ -249,7 +212,6 @@ class Producto extends Model
             throw $e;
         }
     }
-
     public function inactivarProductoTx()
     {
         try {

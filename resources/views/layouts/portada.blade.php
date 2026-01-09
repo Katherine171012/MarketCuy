@@ -23,8 +23,6 @@
         </div>
 
         <div class="row g-5 justify-content-center">
-
-            {{-- CLIENTES --}}
             <div class="col-12 col-md-6 col-xl-5">
                 <div class="card shadow card-modulo border-0 text-center">
                     <div class="card-body p-4">
@@ -41,8 +39,6 @@
                     </div>
                 </div>
             </div>
-
-            {{-- PRODUCTOS --}}
             <div class="col-12 col-md-6 col-xl-5">
                 <div class="card shadow card-modulo border-0 text-center">
                     <div class="card-body p-4">
@@ -59,8 +55,6 @@
                     </div>
                 </div>
             </div>
-
-            {{-- FACTURAS --}}
             <div class="col-12 col-md-6 col-xl-5">
                 <div class="card shadow card-modulo border-0 text-center">
                     <div class="card-body p-4">
@@ -83,8 +77,6 @@
                     </div>
                 </div>
             </div>
-
-            {{-- PROVEEDORES --}}
             <div class="col-12 col-md-6 col-xl-5">
                 <div class="card shadow card-modulo border-0 text-center">
                     <div class="card-body p-4">
