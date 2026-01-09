@@ -7,7 +7,6 @@
     </nav>
 
     <div class="container">
-        {{-- ENCABEZADO DE SECCIÓN Y BOTONES DE ACCIÓN --}}
         <div class="row align-items-center mb-3">
             <div class="col">
                 <h5 class="fw-bold mb-0 text-dark">Resultados Encontrados</h5>
@@ -22,7 +21,6 @@
             </div>
         </div>
 
-        {{-- PANEL DE BÚSQUEDA (UNIFICADO) --}}
         <div class="collapse mb-4 {{ (isset($busquedaActiva) || request('valor_texto') || request('valor_ciudad')) ? 'show' : '' }}" id="panelBusqueda">
             <div class="card border-0 shadow-sm rounded-3 overflow-hidden" style="border: 1px solid #660404 !important;">
                 <div class="card-header py-2 text-white" style="background-color: #660404;">
@@ -74,7 +72,6 @@
             </div>
         </div>
 
-        {{-- TABLA DE RESULTADOS --}}
         <div class="card border-0 shadow-sm overflow-hidden mb-4">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0 table-market">
@@ -123,13 +120,11 @@
             </div>
         </div>
 
-        {{-- PAGINACIÓN --}}
         <div class="d-flex justify-content-center mt-3 mb-5">
             {{ $clientes->appends(request()->all())->links('pagination::bootstrap-4') }}
         </div>
     </div>
 
-    {{-- SCRIPTS JS --}}
     <script>
         document.getElementById('criterioBusqueda').addEventListener('change', function() {
             const ph = this.options[this.selectedIndex].getAttribute('data-ph');
