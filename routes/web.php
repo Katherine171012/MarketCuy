@@ -7,12 +7,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\FacturaController;
 
-/*
-|--------------------------------------------------------------------------
-| HOME / PORTADA
-|--------------------------------------------------------------------------
-| Raíz del sitio carga la portada directamente.
-*/
+// Portada
 Route::get('/', function () {
     return view('layouts.portada');
 })->name('home');
@@ -22,11 +17,7 @@ Route::get('/home', function () {
 });
 
 
-/*
-|--------------------------------------------------------------------------
-| CLIENTES (código de tu compañera)
-|--------------------------------------------------------------------------
-*/
+//Cliente
 Route::get('/clientes', [ClienteController::class, 'index'])
     ->name('clientes.index');
 
@@ -45,7 +36,6 @@ Route::post('/clientes/buscar', [ClienteController::class, 'buscar'])
 Route::post('/clientes', [ClienteController::class, 'store'])
     ->name('clientes.store');
 
-// RUTAS DINÁMICAS (al final)
 Route::get('/clientes/{cliente}/detalle', [ClienteController::class, 'verDetalle'])
     ->name('clientes.detalle');
 
@@ -62,11 +52,7 @@ Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])
     ->name('clientes.destroy');
 
 
-/*
-|--------------------------------------------------------------------------
-| PRODUCTOS (tu módulo)
-|--------------------------------------------------------------------------
-*/
+//Productos
 Route::prefix('productos')->group(function () {
 
     Route::get('/menu', function () {
@@ -95,12 +81,7 @@ Route::prefix('productos')->group(function () {
     Route::delete('/{id}', [ProductoController::class, 'destroy'])
         ->name('productos.destroy');
 });
-
-
-/*
-|--------------------------------------------------------------------------
-| PROVEEDORES
- */
+//Proveedores
 Route::prefix('proveedores')->group(function () {
 
     // Pantalla principal
