@@ -10,7 +10,7 @@
                class="btn btn-primary btn-sm fw-bold px-3 py-2 shadow-sm">
                 + Crear nuevo proveedor
             </a>
-            //boton busqueda
+
             <a href="#busqueda"
                class="btn btn-outline-secondary btn-sm fw-bold px-3 py-2 bg-white"
                style="color: #660404; border-color: #660404;"
@@ -19,15 +19,15 @@
             </a>
         </div>
     </div>
-    //Panel editar
+
     @if(isset($proveedorEdit) && $proveedorEdit)
         @include('proveedores.edit', ['proveedor' => $proveedorEdit, 'ciudades' => $ciudades, 'modo' => 'edit'])
     @endif
-    //Panel Visualizar
+
     @if(isset($proveedorView) && $proveedorView)
         @include('proveedores.edit', ['proveedor' => $proveedorView, 'ciudades' => $ciudades, 'modo' => 'view'])
     @endif
-    //Activa y llama eliminar
+
     @if(isset($proveedorDelete) && $proveedorDelete)
         @include('proveedores.eliminar', ['proveedor' => $proveedorDelete])
     @endif
