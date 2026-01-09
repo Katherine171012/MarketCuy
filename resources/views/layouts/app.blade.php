@@ -105,11 +105,15 @@
     $esClientes     = ($p === 'clientes' || str_starts_with($p, 'clientes/'));
     $esProductos    = ($p === 'productos' || str_starts_with($p, 'productos/'));
     $esProveedores  = ($p === 'proveedores' || str_starts_with($p, 'proveedores/'));
+    $esFacturas = ($p === 'facturas' || str_starts_with($p, 'facturas/'));
+
 
     $clasesBody = [];
     if ($esClientes) $clasesBody[] = 'mod-clientes';
     if ($esProductos) $clasesBody[] = 'mod-productos';
     if ($esProveedores) $clasesBody[] = 'mod-proveedores';
+    if ($esFacturas) $clasesBody[] = 'mod-facturas';
+
 
     $homeUrl = '/';
     try {
@@ -143,8 +147,11 @@
                     <li class="nav-item"><span class="nav-link active fw-semibold">Productos</span></li>
                 @elseif($esProveedores)
                     <li class="nav-item"><span class="nav-link active fw-semibold">Proveedores</span></li>
+                @elseif($esFacturas)
+                    <li class="nav-item"><span class="nav-link active fw-semibold">Facturas</span></li>
                 @endif
             </ul>
+
         </div>
     </div>
 </nav>
