@@ -1,7 +1,8 @@
 <div class="card">
     <div class="card-header fw-semibold">
-        Nuevo Producto
+        Nuevo producto
     </div>
+
     <div class="card-body">
         <form method="POST" action="{{ route('productos.store') }}" enctype="multipart/form-data">
             @csrf
@@ -27,21 +28,32 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Unidad de Medida</label>
+                <label class="form-label">Unidad de medida</label>
                 <select class="form-select" name="unidad_medida" required>
                     <option value="">Seleccione unidad de medida</option>
                     @foreach($unidades as $u)
                         <option value="{{ $u->id_unidad_medida }}"
                             {{ old('unidad_medida') == $u->id_unidad_medida ? 'selected' : '' }}>
-                            {{ $u->id_unidad_medida }}
+                            {{ $u->id_unidad_medida }} - {{ $u->um_descripcion ?? 'Sin descripción' }}
                         </option>
                     @endforeach
                 </select>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label">Imagen del producto (opcional)</label>
+                <input type="file"
+                       class="form-control"
+                       name="pro_imagen"
+                       accept=".jpg,.jpeg,.pdf">
+                <div class="form-text">
+                    Solo se permiten archivos JPG o PDF.
+                </div>
+            </div>
+
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Precio Compra</label>
+                    <label class="form-label">Precio compra</label>
                     <input type="number" step="0.01" min="0"
                            class="form-control"
                            name="pro_valor_compra"
@@ -49,7 +61,7 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Precio Venta</label>
+                    <label class="form-label">Precio venta</label>
                     <input type="number" step="0.01" min="0"
                            class="form-control"
                            name="pro_precio_venta"
@@ -58,7 +70,7 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Cantidad Inicial</label>
+                    <label class="form-label">Stock inicial</label>
                     <input type="number" min="0"
                            class="form-control"
                            name="pro_saldo_inicial"

@@ -6,12 +6,10 @@ use App\Models\Producto;
 use App\Models\UnidadMedida;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ProductoController extends Controller
 {
-    /* =========================================================
-       MENSAJERÍA DESDE config/mensajes.php
-    ==========================================================*/
     private function msg(string $key): string
     {
         $all = config('mensajes', []);
@@ -23,27 +21,16 @@ class ProductoController extends Controller
         $data['msg'] = config('mensajes', []);
         return view($view, $data);
     }
-
-    /* =========================
-       PANTALLA ÚNICA
-    ==========================*/
     public function index(Request $request)
     {
-        // ✅ per_page (pedido jefa)
         $perPage = (int) $request->get('per_page', 10);
         if (!in_array($perPage, [10, 25, 50, 100], true)) {
             $perPage = 10;
         }
-
-        // ✅ método estilo jefa (orden por estado + id) (ACT primero, INA al final) -> lo controlas en el Model
         $productos = Producto::obtenerParaLista($perPage);
         $productos->appends($request->except('page'));
 
         $unidades = UnidadMedida::listar();
-
-        /* =========================
-           EDITAR (solo si está ACT)
-        ==========================*/
         $editId = $request->get('edit');
         $productoEditar = null;
 
@@ -54,17 +41,11 @@ class ProductoController extends Controller
                 return redirect()->route('productos.index')
                     ->with('error', $this->msg('gen.error'));
             }
-
-            // ✅ BLOQUEO: si está INA no se puede editar
             if ($productoEditar->estado_prod === 'INA') {
                 return redirect()->route('productos.index')
                     ->with('error', $this->msg('M60')); // operación no permitida
             }
         }
-
-        /* =========================
-           ELIMINAR (solo confirma)
-        ==========================*/
         $deleteId = $request->get('delete');
         $productoEliminar = null;
 
@@ -76,10 +57,6 @@ class ProductoController extends Controller
                     ->with('error', $this->msg('gen.error'));
             }
         }
-
-        /* =========================
-           VISUALIZAR (solo lectura)
-        ==========================*/
         $viewId = $request->get('view');
         $productoVer = null;
 
@@ -98,37 +75,32 @@ class ProductoController extends Controller
             'productoEditar' => $productoEditar,
             'productoEliminar' => $productoEliminar,
             'productoVer' => $productoVer,
-            // si no hay registros en la lista principal, usamos "Sin resultados"
             'info' => $productos->count() === 0 ? $this->msg('M59') : null,
         ]);
     }
-
-    /* =========================
-       GUARDAR PRODUCTO (F4.1)
-    ==========================*/
     public function store(Request $request)
     {
         if (!$request->pro_descripcion) {
             return back()->withErrors([
-                'pro_descripcion' => $this->msg('M25') // Producto vacío
+                'pro_descripcion' => $this->msg('M25')
             ])->withInput();
         }
 
         if ($request->pro_precio_venta === null || $request->pro_precio_venta === '') {
             return back()->withErrors([
-                'pro_precio_venta' => $this->msg('M29') // Precio vacío
+                'pro_precio_venta' => $this->msg('M29')
             ])->withInput();
         }
 
         if (!is_numeric($request->pro_precio_venta)) {
             return back()->withErrors([
-                'pro_precio_venta' => $this->msg('M30') // Precio no numérico
+                'pro_precio_venta' => $this->msg('M30')
             ])->withInput();
         }
 
         if ($request->pro_precio_venta < 0) {
             return back()->withErrors([
-                'pro_precio_venta' => $this->msg('M31') // Precio negativo
+                'pro_precio_venta' => $this->msg('M31')
             ])->withInput();
         }
 
@@ -138,7 +110,7 @@ class ProductoController extends Controller
             $request->pro_valor_compra < 0
         ) {
             return back()->withErrors([
-                'pro_valor_compra' => $this->msg('M31') // Precio negativo
+                'pro_valor_compra' => $this->msg('M31')
             ])->withInput();
         }
 
@@ -148,14 +120,26 @@ class ProductoController extends Controller
             $request->pro_saldo_inicial < 0
         ) {
             return back()->withErrors([
-                'pro_saldo_inicial' => $this->msg('M35') // Cantidad inválida (para stock)
+                'pro_saldo_inicial' => $this->msg('M35')
             ])->withInput();
         }
 
         if (Producto::existeDescripcion($request->pro_descripcion)) {
             return back()->withErrors([
-                'pro_descripcion' => $this->msg('M26') // Producto duplicado
+                'pro_descripcion' => $this->msg('M26')
             ])->withInput();
+        }
+        if ($request->hasFile('pro_imagen')) {
+
+            $file = $request->file('pro_imagen');
+
+            $ext = strtolower($file->getClientOriginalExtension());
+
+            if (!in_array($ext, ['jpg', 'jpeg', 'pdf'], true)) {
+                return back()->withErrors([
+                    'pro_imagen' => 'Solo se permiten archivos JPG o PDF.'
+                ])->withInput();
+            }
         }
 
         try {
@@ -164,17 +148,37 @@ class ProductoController extends Controller
             $data = $request->all();
             $data['id_producto'] = $nuevoId;
 
+            // ✅ IMAGEN: guardar con nombre = ID del producto (P1000, P1001...)
+            if ($request->hasFile('pro_imagen') && $request->file('pro_imagen')->isValid()) {
+
+                $file = $request->file('pro_imagen');
+
+                // extensión real del archivo (jpg, png, webp, etc.)
+                $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+
+                // nombre final: P1005.jpg (o png, etc.)
+                $filename = $nuevoId . '.' . $ext;
+
+                // se guarda en: storage/app/public/productos/P1005.jpg
+                // y se registra en BD como: productos/P1005.jpg
+                $path = $file->storeAs('productos', $filename, 'public');
+
+                $data['pro_imagen'] = $path;
+            } else {
+                $data['pro_imagen'] = null;
+            }
+
             Producto::crearProductoTx($data);
 
             return redirect()->route('productos.index')
-                ->with('ok', $this->msg('M1')); // Registro creado
+                ->with('ok', $this->msg('M1'));
 
         } catch (\Exception $e) {
 
             Log::error('ProductoController@store ERROR', [
-                'msg'   => $e->getMessage(),
-                'file'  => $e->getFile(),
-                'line'  => $e->getLine(),
+                'msg' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
@@ -183,11 +187,7 @@ class ProductoController extends Controller
                 ->withInput();
         }
     }
-
-    /* =========================
-       ACTUALIZAR PRODUCTO (F4.2)
-    ==========================*/
-    public function update(Request $request, $id)
+        public function update(Request $request, $id)
     {
         $producto = Producto::buscarPorId($id);
 
@@ -196,7 +196,6 @@ class ProductoController extends Controller
                 ->with('error', $this->msg('gen.error'));
         }
 
-        // ✅ BLOQUEO: si está INA no se puede editar
         if ($producto->estado_prod === 'INA') {
             return redirect()->route('productos.index')
                 ->with('error', $this->msg('M60'));
@@ -204,19 +203,19 @@ class ProductoController extends Controller
 
         if ($request->pro_precio_venta === null || $request->pro_precio_venta === '') {
             return back()->withErrors([
-                'pro_precio_venta' => $this->msg('M29') // Precio vacío
+                'pro_precio_venta' => $this->msg('M29')
             ])->withInput();
         }
 
         if (!is_numeric($request->pro_precio_venta)) {
             return back()->withErrors([
-                'pro_precio_venta' => $this->msg('M30') // Precio no numérico
+                'pro_precio_venta' => $this->msg('M30')
             ])->withInput();
         }
 
         if ($request->pro_precio_venta < 0) {
             return back()->withErrors([
-                'pro_precio_venta' => $this->msg('M31') // Precio negativo
+                'pro_precio_venta' => $this->msg('M31')
             ])->withInput();
         }
 
@@ -231,7 +230,7 @@ class ProductoController extends Controller
         foreach ($nums as $n) {
             if ($request->$n < 0) {
                 return back()->withErrors([
-                    'stock' => $this->msg('M35') // Cantidad inválida
+                    'stock' => $this->msg('M35')
                 ])->withInput();
             }
         }
@@ -241,7 +240,7 @@ class ProductoController extends Controller
             $producto->actualizarProductoTx($data);
 
             return redirect()->route('productos.index')
-                ->with('ok', $this->msg('M2')); // Registro actualizado
+                ->with('ok', $this->msg('M2'));
 
         } catch (\Exception $e) {
 
@@ -258,10 +257,6 @@ class ProductoController extends Controller
                 ->withInput();
         }
     }
-
-    /* =========================
-       ELIMINAR (INACTIVAR) (F4.3)
-    ==========================*/
     public function destroy($id)
     {
         $producto = Producto::buscarPorId($id);
@@ -270,8 +265,6 @@ class ProductoController extends Controller
             return redirect()->route('productos.index')
                 ->with('error', $this->msg('gen.error'));
         }
-
-        // ✅ Si no está ACT, no se puede inactivar otra vez
         if ($producto->estado_prod !== 'ACT') {
             return redirect()->route('productos.index')
                 ->with('error', $this->msg('M60'));
@@ -281,7 +274,7 @@ class ProductoController extends Controller
             $producto->inactivarProductoTx();
 
             return redirect()->route('productos.index')
-                ->with('ok', $this->msg('M3')); // Registro inactivado (mensaje genérico "eliminado")
+                ->with('ok', $this->msg('M3'));
 
         } catch (\Exception $e) {
 
@@ -297,13 +290,8 @@ class ProductoController extends Controller
                 ->with('error', $this->msg('gen.error'));
         }
     }
-
-    /* =========================
-       CONSULTA POR PARÁMETRO (F4.4.2)
-    ==========================*/
     public function buscar(Request $request)
     {
-        // ✅ per_page también aquí (para que el selector sirva en búsqueda)
         $perPage = (int) $request->get('per_page', 10);
         if (!in_array($perPage, [10, 25, 50, 100], true)) {
             $perPage = 10;
@@ -319,7 +307,7 @@ class ProductoController extends Controller
 
         if (!$tieneOrden && !$tieneCategoria && !$tieneUnidad) {
             return back()->withErrors([
-                'parametros' => $this->msg('M57') // Parámetro vacío
+                'parametros' => $this->msg('M57')
             ])->withInput();
         }
 
@@ -333,7 +321,7 @@ class ProductoController extends Controller
 
             if ($productos === null) {
                 return back()->withErrors([
-                    'orden' => $this->msg('M58') // Parámetro inválido
+                    'orden' => $this->msg('M58')
                 ])->withInput();
             }
 
@@ -347,7 +335,7 @@ class ProductoController extends Controller
                 'productoEditar' => null,
                 'productoEliminar' => null,
                 'productoVer' => null,
-                'info' => $productos->count() === 0 ? $this->msg('M59') : null, // Sin resultados
+                'info' => $productos->count() === 0 ? $this->msg('M59') : null,
             ]);
 
         } catch (\Exception $e) {

@@ -111,7 +111,6 @@
     if ($esProductos) $clasesBody[] = 'mod-productos';
     if ($esProveedores) $clasesBody[] = 'mod-proveedores';
 
-    // Ruta "home" segura: si no existe, usamos proveedores o "/"
     $homeUrl = '/';
     try {
         if (function_exists('route') && app('router')->has('home')) {
@@ -128,7 +127,6 @@
 
 <body class="bg-light {{ implode(' ', $clasesBody) }}">
 
-{{-- ===== NAVBAR GLOBAL (ÚNICO) ===== --}}
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand fw-semibold" href="{{ $homeUrl }}">MarketCuy</a>
@@ -153,10 +151,9 @@
 
 <main class="container py-4">
 
-    {{-- Mensajería NUEVA (estándar por código) --}}
     @if(session('codigo_mensaje'))
         @php
-            $tipo = session('tipo_mensaje', 'success'); // success|warning|danger
+            $tipo = session('tipo_mensaje', 'success');
             $texto = config('mensajes.' . session('codigo_mensaje'));
         @endphp
 
@@ -178,10 +175,8 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
-    {{-- Tu módulo (proveedores) --}}
     @yield('contenido')
 
-    {{-- Módulos de tus panas (clientes/productos) --}}
     @yield('content')
 
 </main>

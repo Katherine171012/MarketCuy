@@ -3,8 +3,6 @@
 @section('titulo', 'MarketCuy')
 
 @section('contenido')
-
-    {{-- Mensajes backend --}}
     @if(session('ok'))
         <div class="alert alert-success">{{ session('ok') }}</div>
     @endif
@@ -12,8 +10,6 @@
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
-
-    {{-- Errores --}}
     @if($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">
@@ -23,12 +19,9 @@
             </ul>
         </div>
     @endif
-
     @if(isset($info) && $info)
         <div class="alert alert-warning mb-3">{{ $info }}</div>
     @endif
-
-    {{-- Subtítulo --}}
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <h2 class="h4 mb-0">Módulo Productos</h2>
 
@@ -46,8 +39,6 @@
             </button>
         </div>
     </div>
-
-    {{-- ✅ MODO "VENTANA" CREAR --}}
     @if(request('create'))
         <div class="mb-3">
             <a href="{{ route('productos.index') }}" class="btn btn-secondary">
@@ -62,8 +53,6 @@
         </div>
 
     @else
-
-        {{-- Buscador (collapse) --}}
         <div class="row g-3 mb-4">
             <div class="col-12">
                 <div class="collapse" id="collapseBuscar">
@@ -71,15 +60,11 @@
                 </div>
             </div>
         </div>
-
-        {{-- Edit --}}
         @if(isset($productoEditar) && $productoEditar)
             <div class="mb-4">
                 @include('productos.edit')
             </div>
         @endif
-
-        {{-- Visualizar --}}
         @if(isset($productoVer) && $productoVer)
             <div class="card mb-4">
                 <div class="card-header fw-semibold">
@@ -153,8 +138,6 @@
                                         data-bs-target="#{{ $modalId }}">
                                     Eliminar
                                 </button>
-
-                                {{-- ✅ MODAL (solo para ACT) --}}
                                 <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
@@ -187,7 +170,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                {{-- /MODAL --}}
                             @else
                                 <a class="btn btn-outline-dark btn-sm"
                                    href="{{ route('productos.index', ['view' => $p->id_producto]) }}">
@@ -208,14 +190,10 @@
                 </tbody>
             </table>
         </div>
-
-        {{-- ✅ BLOQUE "Mostrar X" + "Mostrando..." --}}
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-
+        <div class="d-flex align-items-center flex-wrap gap-2 mt-3">
             <form method="GET" action="{{ url()->current() }}" class="d-flex align-items-center gap-2">
                 <label class="small text-muted">Mostrar</label>
 
-                {{-- Mantener params actuales --}}
                 @foreach(request()->except(['page','per_page']) as $k => $v)
                     @if(is_array($v))
                         @foreach($v as $vv)
@@ -234,15 +212,15 @@
                 </select>
 
                 <span class="small text-muted">registros</span>
-
-                <div class="text-center">
-                    @if($productos->total() > 0)
-                        <span class="small text-muted fw-bold">
-                            Mostrando {{ $productos->lastItem() }} de {{ $productos->total() }} registros
-                        </span>
-                    @endif
-                </div>
             </form>
+
+            <div class="flex-grow-1 text-center">
+                @if($productos->total() > 0)
+                    <span class="small text-muted fw-bold">
+                Mostrando {{ $productos->lastItem() }} de {{ $productos->total() }} registros
+            </span>
+                @endif
+            </div>
         </div>
 
         <div class="d-flex justify-content-center mt-4">

@@ -13,11 +13,9 @@ class UnidadMedida extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_unidad_medida'
-        // si tu tabla tiene más columnas, agrégalas aquí
+        'id_unidad_medida',
+        'um_descripcion'
     ];
-
-    // ✅ Query encapsulada (para que controller no consulte)
     public static function listar()
     {
         return self::orderBy('id_unidad_medida')->get();

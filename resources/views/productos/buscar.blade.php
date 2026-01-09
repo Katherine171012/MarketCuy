@@ -1,19 +1,18 @@
 <div class="card">
     <div class="card-header fw-semibold">
-        Buscar por Parámetro
+        Búsqueda avanzada
     </div>
 
     <div class="card-body">
-
         <form method="GET" action="{{ route('productos.buscar') }}">
 
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Ordenar por</label>
+                    <label class="form-label">Ordenar resultados</label>
                     <select name="orden" class="form-select">
                         <option value="">Seleccione orden</option>
-                        <option value="id_asc"  {{ request('orden')=='id_asc' ? 'selected' : '' }}>ID (ASC)</option>
-                        <option value="id_desc" {{ request('orden')=='id_desc' ? 'selected' : '' }}>ID (DESC)</option>
+                        <option value="id_asc"  {{ request('orden')=='id_asc' ? 'selected' : '' }}>ID (A-Z)</option>
+                        <option value="id_desc" {{ request('orden')=='id_desc' ? 'selected' : '' }}>ID (Z-A)</option>
                         <option value="desc_az" {{ request('orden')=='desc_az' ? 'selected' : '' }}>Descripción (A-Z)</option>
                         <option value="desc_za" {{ request('orden')=='desc_za' ? 'selected' : '' }}>Descripción (Z-A)</option>
                     </select>
@@ -31,13 +30,13 @@
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label">Unidad de Medida</label>
+                    <label class="form-label">Unidad de medida</label>
                     <select name="unidad_medida" class="form-select">
                         <option value="">(Opcional) Todas</option>
                         @foreach($unidades as $u)
                             <option value="{{ $u->id_unidad_medida }}"
                                 {{ request('unidad_medida') == $u->id_unidad_medida ? 'selected' : '' }}>
-                                {{ $u->id_unidad_medida }}
+                                {{ $u->id_unidad_medida }} - {{ $u->um_descripcion ?? 'Sin descripción' }}
                             </option>
                         @endforeach
                     </select>
@@ -55,7 +54,7 @@
             </div>
 
             <div class="form-text mt-2">
-                Puedes enviar 1 solo parámetro o varios.
+                Puedes filtrar por 1 o varios criterios.
             </div>
 
         </form>

@@ -36,6 +36,7 @@ Route::post('/clientes/buscar', [ClienteController::class, 'buscar'])
 Route::post('/clientes', [ClienteController::class, 'store'])
     ->name('clientes.store');
 
+// RUTAS DINÁMICAS (al final)
 Route::get('/clientes/{cliente}/detalle', [ClienteController::class, 'verDetalle'])
     ->name('clientes.detalle');
 
@@ -82,62 +83,39 @@ Route::prefix('productos')->group(function () {
         ->name('productos.destroy');
 });
 //Proveedores
-Route::prefix('proveedores')->group(function () {
 
-    // Pantalla principal
+Route::prefix('proveedores')->group(function () {
     Route::get('/', [ProveedorController::class, 'index'])
         ->name('proveedores.index');
-
-    // Crear (formulario)
     Route::get('/crear', [ProveedorController::class, 'create'])
         ->name('proveedores.create');
-
-    // Guardar
     Route::post('/', [ProveedorController::class, 'store'])
         ->name('proveedores.store');
-
-    // Editar (redirige al index con ?edit=ID como ya lo tienes)
     Route::get('/{proveedor}/editar', [ProveedorController::class, 'edit'])
         ->name('proveedores.edit');
-
-    // Actualizar
     Route::put('/{proveedor}', [ProveedorController::class, 'update'])
         ->name('proveedores.update');
-
-    // Eliminar lógico (DELETE)
     Route::delete('/{proveedor}', [ProveedorController::class, 'destroy'])
         ->name('proveedores.destroy');
 });
 
 Route::prefix('facturas')->group(function () {
-
-    // F5.4.1 – Consulta general (pantalla principal)
     Route::get('/', [FacturaController::class, 'index'])
         ->name('facturas.index');
-
-    // F5.1 – Generar factura
     Route::get('/crear', [FacturaController::class, 'create'])
         ->name('facturas.create');
 
     Route::post('/', [FacturaController::class, 'store'])
         ->name('facturas.store');
-
-    // F5.x – Aprobar factura
     Route::post('/{idFactura}/aprobar', [FacturaController::class, 'aprobar'])
         ->name('facturas.aprobar');
-
-    // F5.2 – Modificar factura
     Route::get('/{idFactura}/editar', [FacturaController::class, 'edit'])
         ->name('facturas.edit');
 
     Route::put('/{idFactura}', [FacturaController::class, 'update'])
         ->name('facturas.update');
-
-    // F5.3 – Anular factura
     Route::delete('/{idFactura}/anular', [FacturaController::class, 'destroy'])
         ->name('facturas.anular');
-
-    // F5.4.2 – Buscar por parámetros
     Route::get('/buscar', [FacturaController::class, 'buscar'])
         ->name('facturas.buscar');
 
