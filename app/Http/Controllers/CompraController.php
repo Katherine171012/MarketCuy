@@ -14,9 +14,9 @@ class CompraController extends Controller
     {
         $parametro = $request->get('parametro');
         $valor     = trim((string) $request->get('valor'));
-        $orden     = $request->get('orden', 'desc');
-
+        $orden = $request->get('orden', 'fecha'); // fecha|estado|proveedor
         $ordenes = Compra::buscar($parametro, $valor, $orden);
+
 
         // Modal eliminar (misma pantalla): /compras?delete=OC-00001
         $compraDelete = null;

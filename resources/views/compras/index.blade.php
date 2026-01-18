@@ -22,13 +22,24 @@
         </div>
     </div>
 
-    {{-- MODALES tipo proveedores (edit/delete/view en el mismo index) --}}
+    {{-- MODALES tipo proveedores --}}
     @if(isset($compraDelete) && $compraDelete)
         @include('compras.eliminar', ['compra' => $compraDelete])
     @endif
 
     @php
         $busquedaActiva = request('parametro') || request('valor') || request('orden');
+
+        // Orden visual: ABI primero, luego APR, y al final ANU
+        $ordenesOrdenadas = ($ordenes ?? collect())->sortBy(function ($oc) {
+            $estado = trim((string)($oc->estado_oc ?? ''));
+            return match ($estado) {
+                'ABI' => 1,
+                'APR' => 2,
+                'ANU' => 3,
+                default => 4,
+            };
+        });
     @endphp
 
     <div class="row mb-3" id="busqueda" style="{{ $busquedaActiva ? '' : 'display:none;' }}">
@@ -94,14 +105,14 @@
                 </thead>
 
                 <tbody class="bg-white">
-                @foreach($ordenes as $oc)
+                @foreach($ordenesOrdenadas as $oc)
                     @php
-                        $idOc = trim($oc->id_compra);
-                        $estado = trim($oc->estado_oc);
+                        $idOc = trim((string)$oc->id_compra);
+                        $estado = trim((string)$oc->estado_oc);
 
-                        $esAbierta = ($estado === 'ABI');
-                        $esActiva  = ($estado === 'ACT');
-                        $esAnulada = ($estado === 'ANU');
+                        $esAbierta  = ($estado === 'ABI');
+                        $esAprobada = ($estado === 'APR');
+                        $esAnulada  = ($estado === 'ANU');
                     @endphp
 
                     <tr style="{{ $esAnulada ? 'background-color:#f9f9f9;color:#aaa;' : '' }}">
@@ -118,8 +129,8 @@
                         <td class="text-center">
                             @if($esAbierta)
                                 <span class="badge rounded-pill bg-warning text-dark px-3">Abierta</span>
-                            @elseif($esActiva)
-                                <span class="badge rounded-pill bg-success px-3">Activa</span>
+                            @elseif($esAprobada)
+                                <span class="badge rounded-pill bg-success px-3">Aprobada</span>
                             @elseif($esAnulada)
                                 <span class="badge rounded-pill bg-secondary opacity-50 px-3">Anulada</span>
                             @else
@@ -145,7 +156,6 @@
                                         </button>
                                     </form>
 
-                                    {{-- ELIMINAR estilo proveedores: manda al index con ?delete= --}}
                                     <a href="{{ route('compras.index', array_merge(request()->query(), ['delete' => $idOc])) }}"
                                        class="btn btn-danger btn-sm fw-bold px-3 py-1 shadow-sm"
                                        style="border:none;font-size:.75rem;">
@@ -159,7 +169,7 @@
                     </tr>
                 @endforeach
 
-                @if($ordenes->count() === 0)
+                @if(($ordenesOrdenadas instanceof \Illuminate\Support\Collection ? $ordenesOrdenadas->count() : 0) === 0)
                     <tr>
                         <td colspan="7" class="text-center py-4 text-muted">
                             No existen registros.
