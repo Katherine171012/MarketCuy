@@ -38,13 +38,32 @@ class Compra extends Model
             }
         }
 
-        $orden = strtolower($orden) === 'asc' ? 'asc' : 'desc';
-        $campoOrden = in_array($parametro, ['id_compra', 'id_proveedor', 'estado_oc', 'oc_fecha_hora'], true)
-            ? $parametro
-            : 'oc_fecha_hora';
+        // 1) Primero por estado: ABI -> APR -> ANU (de arriba hacia abajo)
+        $query->orderByRaw("
+        CASE TRIM(estado_oc)
+            WHEN 'APR' THEN 1
+            WHEN 'ABI' THEN 2
+            WHEN 'ANU' THEN 3
+            ELSE 4
+        END ASC
+    ");
 
-        return $query->orderBy($campoOrden, $orden)->paginate(10);
+        // 2) Luego por el campo que el usuario selecciona en "Ordenar por"
+        $campoOrden = match ($orden) {
+            'fecha'     => 'oc_fecha_hora',
+            'estado'    => 'estado_oc',
+            'proveedor' => 'id_proveedor',
+            default     => 'oc_fecha_hora',
+        };
+
+        // Dirección: para que se vea "de arriba hacia abajo" (más reciente arriba en fecha)
+        $direccion = 'desc';
+
+        $query->orderBy($campoOrden, $direccion);
+
+        return $query->paginate(10);
     }
+
 
     public static function obtenerPorId(string $id): ?self
     {
@@ -75,14 +94,10 @@ class Compra extends Model
         return $row->id_oc ?? '';
     }
 
-    /**
-     * Convierte ['P001','P002'] -> '{P001,P002}'
-     */
     private static function pgArrayText(array $arr): string
     {
         $arr = array_map(function ($v) {
             $v = trim((string)$v);
-            // escape básico por si acaso
             $v = str_replace(['\\', '"'], ['\\\\', '\\"'], $v);
             return '"' . $v . '"';
         }, $arr);
@@ -90,24 +105,16 @@ class Compra extends Model
         return '{' . implode(',', $arr) . '}';
     }
 
-    /**
-     * Convierte [2,5,1] -> '{2,5,1}'
-     */
     private static function pgArrayInt(array $arr): string
     {
         $arr = array_map(fn($v) => (int)$v, $arr);
         return '{' . implode(',', $arr) . '}';
     }
 
-    /**
-     * Convierte [1.50,3.25] -> '{1.50,3.25}'
-     */
     private static function pgArrayNumeric(array $arr): string
     {
         $arr = array_map(function ($v) {
-            // asegurar punto decimal
             $n = is_null($v) ? 0 : (float)$v;
-            // no fuerzo decimales fijos, PG lo acepta igual
             return rtrim(rtrim(number_format($n, 4, '.', ''), '0'), '.');
         }, $arr);
 
@@ -116,8 +123,6 @@ class Compra extends Model
 
     public static function spActualizar(string $idCompra, string $idProveedor, $fechaIgnorada, array $productos, array $cantidades, array $valores): string
     {
-        // Reutiliza los mismos helpers que ya usas en spCrear:
-        // pgArrayText(), pgArrayInt(), pgArrayNumeric()
         $pgProductos  = self::pgArrayText($productos);
         $pgCantidades = self::pgArrayInt($cantidades);
         $pgValores    = self::pgArrayNumeric($valores);
@@ -130,13 +135,10 @@ class Compra extends Model
         return $row->msg ?? '';
     }
 
-
-
     public static function spAprobar(string $idCompra): void
     {
         DB::selectOne("SELECT public.sp_oc_aprobar(?)", [$idCompra]);
     }
-
 
     public static function spAnular(string $idCompra): string
     {
@@ -144,6 +146,4 @@ class Compra extends Model
         $res = DB::selectOne($sql, [$idCompra]);
         return (string) ($res->mensaje ?? '');
     }
-
-
 }
