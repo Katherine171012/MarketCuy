@@ -106,6 +106,7 @@
     $esProductos    = ($p === 'productos' || str_starts_with($p, 'productos/'));
     $esProveedores  = ($p === 'proveedores' || str_starts_with($p, 'proveedores/'));
     $esFacturas = ($p === 'facturas' || str_starts_with($p, 'facturas/'));
+    $esCompras      = ($p === 'compras' || str_starts_with($p, 'compras/'));
 
 
     $clasesBody = [];
@@ -113,6 +114,7 @@
     if ($esProductos) $clasesBody[] = 'mod-productos';
     if ($esProveedores) $clasesBody[] = 'mod-proveedores';
     if ($esFacturas) $clasesBody[] = 'mod-facturas';
+    if ($esCompras) $clasesBody[] = 'mod-compras';
 
 
     $homeUrl = '/';
@@ -149,6 +151,8 @@
                     <li class="nav-item"><span class="nav-link active fw-semibold">Proveedores</span></li>
                 @elseif($esFacturas)
                     <li class="nav-item"><span class="nav-link active fw-semibold">Facturas</span></li>
+                @elseif($esCompras)
+                    <li class="nav-item"><span class="nav-link active fw-semibold">Compras</span></li>
                 @endif
             </ul>
 

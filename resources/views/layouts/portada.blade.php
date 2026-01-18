@@ -39,6 +39,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col-12 col-md-6 col-xl-5">
                 <div class="card shadow card-modulo border-0 text-center">
                     <div class="card-body p-4">
@@ -55,6 +56,31 @@
                     </div>
                 </div>
             </div>
+
+            {{-- NUEVO: COMPRAS / ÓRDENES DE COMPRA --}}
+            <div class="col-12 col-md-6 col-xl-5">
+                <div class="card shadow card-modulo border-0 text-center">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <h5 class="fw-semibold mb-1">Compras</h5>
+                            <p class="text-muted mb-0">Órdenes de compra y control</p>
+                        </div>
+                        <hr>
+                        @if(\Illuminate\Support\Facades\Route::has('compras.index'))
+                            <a href="{{ route('compras.index') }}"
+                               class="btn text-white w-100 btn-modulo"
+                               style="background-color:#660404;">
+                                Entrar a Compras
+                            </a>
+                        @else
+                            <button class="btn btn-outline-dark w-100 btn-modulo" disabled>
+                                Módulo aún no conectado
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             <div class="col-12 col-md-6 col-xl-5">
                 <div class="card shadow card-modulo border-0 text-center">
                     <div class="card-body p-4">
@@ -77,6 +103,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="col-12 col-md-6 col-xl-5">
                 <div class="card shadow card-modulo border-0 text-center">
                     <div class="card-body p-4">

@@ -134,4 +134,12 @@ class Proveedor extends Model
             $this->update(['estado_prv' => 'INA']);
         });
     }
+    public static function obtenerActivos()
+    {
+        return self::where('estado_prv', 'ACT')
+            ->orderBy('id_proveedor')
+            ->get();
+
+    }
 }
+

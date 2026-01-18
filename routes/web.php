@@ -122,3 +122,25 @@ Route::prefix('facturas')->group(function () {
     Route::post('/buscar', [FacturaController::class, 'ejecutarBusqueda'])
         ->name('facturas.buscar.ejecutar');
 });
+
+
+use App\Http\Controllers\CompraController;
+
+Route::prefix('compras')->name('compras.')->group(function () {
+
+    // CRUD estándar
+    Route::get('/', [CompraController::class, 'index'])->name('index');
+    Route::get('/create', [CompraController::class, 'create'])->name('create');
+    Route::post('/', [CompraController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [CompraController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [CompraController::class, 'update'])->name('update');
+
+    // Confirmación de eliminación (vista)
+    Route::get('/{id}/eliminar', [CompraController::class, 'eliminar'])->name('eliminar');
+
+    // Acción de borrado lógico (anular)
+    Route::delete('/{id}', [CompraController::class, 'destroy'])->name('destroy');
+
+    // Acciones extra por SP
+    Route::post('/{id}/aprobar', [CompraController::class, 'aprobar'])->name('aprobar');
+});

@@ -224,4 +224,19 @@ class Producto extends Model
             throw $e;
         }
     }
+    public static function obtenerValoresCompraPorIds(array $ids): array
+    {
+        $map = self::whereIn('id_producto', $ids)
+            ->get(['id_producto', 'pro_valor_compra'])
+            ->mapWithKeys(fn($p) => [trim($p->id_producto) => (float) ($p->pro_valor_compra ?? 0)])
+            ->toArray();
+
+        $valores = [];
+        foreach ($ids as $id) {
+            $id = trim($id);
+            $valores[] = array_key_exists($id, $map) ? $map[$id] : 0;
+        }
+        return $valores;
+    }
+
 }
