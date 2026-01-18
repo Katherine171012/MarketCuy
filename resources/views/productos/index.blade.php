@@ -26,7 +26,12 @@
     @endif
 
     @php
-        $catMap = [1=>'Alimentos', 2=>'Medicinas', 3=>'Ropa', 4=>'Otros'];
+        $catMap = [];
+        if (isset($categorias) && $categorias) {
+            foreach ($categorias as $c) {
+                $catMap[$c->id_categoria] = $c->cat_nombre;
+            }
+        }
     @endphp
 
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
@@ -76,7 +81,6 @@
             </div>
         @endif
 
-        {{-- ✅ DETALLE: ahora se muestra por NOMBRE y categorías por ID --}}
         @if(isset($productoVer) && $productoVer)
             @php
                 $catVer = $catMap[$productoVer->id_categoria] ?? $productoVer->id_categoria;
@@ -171,7 +175,6 @@
                     <tr>
                         <td class="fw-semibold">{{ $p->id_producto }}</td>
 
-                        {{-- ✅ ahora se muestra pro_nombre (no pro_descripcion) --}}
                         <td>
                             <div>
                                 <div class="fw-semibold">

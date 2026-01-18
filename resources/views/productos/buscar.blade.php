@@ -20,12 +20,14 @@
 
                 <div class="col-md-4">
                     <label class="form-label">Categoría</label>
-                    <select name="pro_categoria" class="form-select">
+                    <select name="id_categoria" class="form-select">
                         <option value="">(Opcional) Todas</option>
-                        <option value="Alimentos" {{ request('pro_categoria')=='Alimentos' ? 'selected' : '' }}>Alimentos</option>
-                        <option value="Medicinas" {{ request('pro_categoria')=='Medicinas' ? 'selected' : '' }}>Medicinas</option>
-                        <option value="Ropa"      {{ request('pro_categoria')=='Ropa' ? 'selected' : '' }}>Ropa</option>
-                        <option value="Otros"     {{ request('pro_categoria')=='Otros' ? 'selected' : '' }}>Otros</option>
+                        @foreach($categorias as $c)
+                            <option value="{{ $c->id_categoria }}"
+                                {{ request('id_categoria') == $c->id_categoria ? 'selected' : '' }}>
+                                {{ $c->cat_nombre }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 

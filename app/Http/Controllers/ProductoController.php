@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Producto;
 use App\Models\UnidadMedida;
+use App\Models\Categoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -33,6 +34,7 @@ class ProductoController extends Controller
         $productos->appends($request->except('page'));
 
         $unidades = UnidadMedida::listar();
+        $categorias = Categoria::listarActivas();
 
         $editId = $request->get('edit');
         $productoEditar = null;
@@ -77,6 +79,7 @@ class ProductoController extends Controller
         return $this->viewWithMsgs('productos.index', [
             'productos' => $productos,
             'unidades' => $unidades,
+            'categorias' => $categorias,
             'productoEditar' => $productoEditar,
             'productoEliminar' => $productoEliminar,
             'productoVer' => $productoVer,
@@ -86,14 +89,12 @@ class ProductoController extends Controller
 
     public function store(Request $request)
     {
-        // ✅ NUEVO: Nombre obligatorio (pro_nombre)
         if (!$request->pro_nombre) {
             return back()->withErrors([
                 'pro_nombre' => $this->msg('M25')
             ])->withInput();
         }
 
-        // Descripción opcional (si tu jefa luego la quiere obligatoria, la validamos)
         $nombre = trim($request->pro_nombre);
 
         if (Producto::existeNombre($nombre)) {
@@ -153,7 +154,6 @@ class ProductoController extends Controller
         try {
             $nuevoId = Producto::generarSiguienteId();
 
-            // armamos data SOLO con lo que usamos (sin quemar cosas raras)
             $data = [
                 'id_producto'       => $nuevoId,
                 'pro_nombre'        => $nombre,
@@ -164,15 +164,12 @@ class ProductoController extends Controller
                 'pro_saldo_inicial' => $request->pro_saldo_inicial,
                 'id_categoria'      => $request->id_categoria ?: null,
 
-                // promociones / portada
                 'pro_etiqueta'      => $request->pro_etiqueta ?: null,
                 'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
 
-                // clicks solo métricas (no frontend)
                 'pro_clicks_count'  => 0,
             ];
 
-            // ✅ IMAGEN: guardar con nombre = ID del producto
             if ($request->hasFile('pro_imagen') && $request->file('pro_imagen')->isValid()) {
                 $file = $request->file('pro_imagen');
                 $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
@@ -251,7 +248,6 @@ class ProductoController extends Controller
             }
         }
 
-        // validar imagen si viene
         if ($request->hasFile('pro_imagen')) {
             $file = $request->file('pro_imagen');
             $ext = strtolower($file->getClientOriginalExtension());
@@ -264,18 +260,15 @@ class ProductoController extends Controller
 
         try {
             $data = [
-                // pro_nombre NO se edita (solo visible en el form)
                 'pro_descripcion'   => $request->pro_descripcion !== '' ? $request->pro_descripcion : null,
                 'id_categoria'      => $request->id_categoria ?: null,
 
                 'pro_valor_compra'  => $request->pro_valor_compra ?? $producto->pro_valor_compra,
                 'pro_precio_venta'  => $request->pro_precio_venta,
 
-                // promociones
                 'pro_etiqueta'      => $request->pro_etiqueta ?: null,
                 'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
 
-                // stock (solo hidden inputs)
                 'pro_saldo_inicial' => $request->pro_saldo_inicial,
                 'pro_qty_ingresos'  => $request->pro_qty_ingresos,
                 'pro_qty_egresos'   => $request->pro_qty_egresos,
@@ -283,9 +276,7 @@ class ProductoController extends Controller
                 'pro_saldo_final'   => $request->pro_saldo_final,
             ];
 
-            // ✅ si sube nueva imagen: reemplaza
             if ($request->hasFile('pro_imagen') && $request->file('pro_imagen')->isValid()) {
-                // borrar anterior si existe
                 if ($producto->pro_imagen && Storage::disk('public')->exists($producto->pro_imagen)) {
                     Storage::disk('public')->delete($producto->pro_imagen);
                 }
@@ -360,10 +351,7 @@ class ProductoController extends Controller
         }
 
         $orden     = $request->input('orden');
-
-        // ahora el filtro debe venir como id_categoria
         $categoria = $request->input('id_categoria');
-
         $unidad    = $request->input('unidad_medida');
 
         $tieneOrden     = ($orden !== null && $orden !== '');
@@ -393,10 +381,12 @@ class ProductoController extends Controller
             $productos->appends($request->except('page'));
 
             $unidades = UnidadMedida::listar();
+            $categorias = Categoria::listarActivas();
 
             return $this->viewWithMsgs('productos.index', [
                 'productos' => $productos,
                 'unidades' => $unidades,
+                'categorias' => $categorias,
                 'productoEditar' => null,
                 'productoEliminar' => null,
                 'productoVer' => null,

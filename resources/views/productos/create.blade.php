@@ -7,7 +7,6 @@
         <form method="POST" action="{{ route('productos.store') }}" enctype="multipart/form-data">
             @csrf
 
-            {{-- ✅ NUEVO: NOMBRE (arriba de Descripción) --}}
             <div class="mb-3">
                 <label class="form-label">Nombre</label>
                 <input type="text"
@@ -25,15 +24,16 @@
                        value="{{ old('pro_descripcion') }}">
             </div>
 
-            {{-- ✅ categoria ahora se guarda en id_categoria (integer) --}}
             <div class="mb-3">
                 <label class="form-label">Categoría</label>
                 <select class="form-select" name="id_categoria" required>
                     <option value="">Seleccione categoría</option>
-                    <option value="1" {{ old('id_categoria')=='1' ? 'selected' : '' }}>Alimentos</option>
-                    <option value="2" {{ old('id_categoria')=='2' ? 'selected' : '' }}>Medicinas</option>
-                    <option value="3" {{ old('id_categoria')=='3' ? 'selected' : '' }}>Ropa</option>
-                    <option value="4" {{ old('id_categoria')=='4' ? 'selected' : '' }}>Otros</option>
+                    @foreach($categorias as $c)
+                        <option value="{{ $c->id_categoria }}"
+                            {{ old('id_categoria') == $c->id_categoria ? 'selected' : '' }}>
+                            {{ $c->cat_nombre }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
 
@@ -50,7 +50,6 @@
                 </select>
             </div>
 
-            {{-- ✅ NUEVO: etiqueta de promo (manual) --}}
             <div class="mb-3">
                 <label class="form-label">Etiqueta (promo)</label>
                 <input type="text"
@@ -60,7 +59,6 @@
                        placeholder="Ej: oferta, descuento %, promo especial...">
             </div>
 
-            {{-- ✅ NUEVO: destacado para portada --}}
             <div class="form-check mb-3">
                 <input class="form-check-input"
                        type="checkbox"

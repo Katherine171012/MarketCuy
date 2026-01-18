@@ -4,9 +4,6 @@
     </div>
 
     @php
-        $catMap = [1=>'Alimentos', 2=>'Medicinas', 3=>'Ropa', 4=>'Otros'];
-        $catActual = $catMap[$productoEditar->id_categoria] ?? $productoEditar->id_categoria;
-
         $imgUrl = null;
         if (!empty($productoEditar->pro_imagen)) {
             $imgUrl = asset('storage/' . ltrim($productoEditar->pro_imagen, '/'));
@@ -18,14 +15,12 @@
             @csrf
             @method('PUT')
 
-            {{-- ===== CABECERA ===== --}}
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">ID</label>
                     <input type="text" class="form-control" value="{{ $productoEditar->id_producto }}" disabled>
                 </div>
 
-                {{-- ✅ NOMBRE visible pero NO editable --}}
                 <div class="col-md-8">
                     <label class="form-label">Nombre</label>
                     <input type="text" class="form-control" value="{{ $productoEditar->pro_nombre }}" disabled>
@@ -65,7 +60,6 @@
 
             <hr class="my-4 text-muted">
 
-            {{-- ✅ DESCRIPCIÓN SÍ se edita (solo la descripción) --}}
             <div class="mb-3">
                 <label class="form-label">Descripción</label>
                 <input type="text"
@@ -74,7 +68,6 @@
                        value="{{ old('pro_descripcion', $productoEditar->pro_descripcion) }}">
             </div>
 
-            {{-- ===== PROMOS ===== --}}
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Precio antes</label>
@@ -116,16 +109,17 @@
 
             <hr class="my-4 text-muted">
 
-            {{-- ===== CATEGORÍA / COSTO ===== --}}
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Categoría</label>
                     <select name="id_categoria" class="form-select" required>
                         <option value="">Seleccione categoría</option>
-                        <option value="1" {{ (int)$productoEditar->id_categoria === 1 ? 'selected' : '' }}>Alimentos</option>
-                        <option value="2" {{ (int)$productoEditar->id_categoria === 2 ? 'selected' : '' }}>Medicinas</option>
-                        <option value="3" {{ (int)$productoEditar->id_categoria === 3 ? 'selected' : '' }}>Ropa</option>
-                        <option value="4" {{ (int)$productoEditar->id_categoria === 4 ? 'selected' : '' }}>Otros</option>
+                        @foreach($categorias as $c)
+                            <option value="{{ $c->id_categoria }}"
+                                {{ (int)$productoEditar->id_categoria === (int)$c->id_categoria ? 'selected' : '' }}>
+                                {{ $c->cat_nombre }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -137,7 +131,6 @@
                            value="{{ old('pro_valor_compra', $productoEditar->pro_valor_compra) }}">
                 </div>
 
-                {{-- ✅ EDITAR FOTO (permitido) --}}
                 <div class="col-md-4">
                     <label class="form-label">Cambiar foto (opcional)</label>
                     <input type="file"
@@ -161,7 +154,6 @@
 
             <hr class="my-4 text-muted">
 
-            {{-- ===== STOCK (NO editable, se envía hidden como antes) ===== --}}
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Stock inicial</label>
