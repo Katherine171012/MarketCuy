@@ -21,16 +21,19 @@ class ProductoController extends Controller
         $data['msg'] = config('mensajes', []);
         return view($view, $data);
     }
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 10);
         if (!in_array($perPage, [10, 25, 50, 100], true)) {
             $perPage = 10;
         }
+
         $productos = Producto::obtenerParaLista($perPage);
         $productos->appends($request->except('page'));
 
         $unidades = UnidadMedida::listar();
+
         $editId = $request->get('edit');
         $productoEditar = null;
 
@@ -43,9 +46,10 @@ class ProductoController extends Controller
             }
             if ($productoEditar->estado_prod === 'INA') {
                 return redirect()->route('productos.index')
-                    ->with('error', $this->msg('M60')); // operación no permitida
+                    ->with('error', $this->msg('M60'));
             }
         }
+
         $deleteId = $request->get('delete');
         $productoEliminar = null;
 
@@ -57,6 +61,7 @@ class ProductoController extends Controller
                     ->with('error', $this->msg('gen.error'));
             }
         }
+
         $viewId = $request->get('view');
         $productoVer = null;
 
@@ -78,11 +83,22 @@ class ProductoController extends Controller
             'info' => $productos->count() === 0 ? $this->msg('M59') : null,
         ]);
     }
+
     public function store(Request $request)
     {
-        if (!$request->pro_descripcion) {
+        // ✅ NUEVO: Nombre obligatorio (pro_nombre)
+        if (!$request->pro_nombre) {
             return back()->withErrors([
-                'pro_descripcion' => $this->msg('M25')
+                'pro_nombre' => $this->msg('M25')
+            ])->withInput();
+        }
+
+        // Descripción opcional (si tu jefa luego la quiere obligatoria, la validamos)
+        $nombre = trim($request->pro_nombre);
+
+        if (Producto::existeNombre($nombre)) {
+            return back()->withErrors([
+                'pro_nombre' => $this->msg('M26')
             ])->withInput();
         }
 
@@ -124,17 +140,9 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
-        if (Producto::existeDescripcion($request->pro_descripcion)) {
-            return back()->withErrors([
-                'pro_descripcion' => $this->msg('M26')
-            ])->withInput();
-        }
         if ($request->hasFile('pro_imagen')) {
-
             $file = $request->file('pro_imagen');
-
             $ext = strtolower($file->getClientOriginalExtension());
-
             if (!in_array($ext, ['jpg', 'jpeg', 'pdf'], true)) {
                 return back()->withErrors([
                     'pro_imagen' => 'Solo se permiten archivos JPG o PDF.'
@@ -145,24 +153,31 @@ class ProductoController extends Controller
         try {
             $nuevoId = Producto::generarSiguienteId();
 
-            $data = $request->all();
-            $data['id_producto'] = $nuevoId;
+            // armamos data SOLO con lo que usamos (sin quemar cosas raras)
+            $data = [
+                'id_producto'       => $nuevoId,
+                'pro_nombre'        => $nombre,
+                'pro_descripcion'   => $request->pro_descripcion !== '' ? $request->pro_descripcion : null,
+                'unidad_medida'     => $request->unidad_medida,
+                'pro_valor_compra'  => $request->pro_valor_compra ?? 0,
+                'pro_precio_venta'  => $request->pro_precio_venta,
+                'pro_saldo_inicial' => $request->pro_saldo_inicial,
+                'id_categoria'      => $request->id_categoria ?: null,
 
-            // ✅ IMAGEN: guardar con nombre = ID del producto (P1000, P1001...)
+                // promociones / portada
+                'pro_etiqueta'      => $request->pro_etiqueta ?: null,
+                'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
+
+                // clicks solo métricas (no frontend)
+                'pro_clicks_count'  => 0,
+            ];
+
+            // ✅ IMAGEN: guardar con nombre = ID del producto
             if ($request->hasFile('pro_imagen') && $request->file('pro_imagen')->isValid()) {
-
                 $file = $request->file('pro_imagen');
-
-                // extensión real del archivo (jpg, png, webp, etc.)
                 $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
-
-                // nombre final: P1005.jpg (o png, etc.)
                 $filename = $nuevoId . '.' . $ext;
-
-                // se guarda en: storage/app/public/productos/P1005.jpg
-                // y se registra en BD como: productos/P1005.jpg
                 $path = $file->storeAs('productos', $filename, 'public');
-
                 $data['pro_imagen'] = $path;
             } else {
                 $data['pro_imagen'] = null;
@@ -187,7 +202,8 @@ class ProductoController extends Controller
                 ->withInput();
         }
     }
-        public function update(Request $request, $id)
+
+    public function update(Request $request, $id)
     {
         $producto = Producto::buscarPorId($id);
 
@@ -235,8 +251,52 @@ class ProductoController extends Controller
             }
         }
 
+        // validar imagen si viene
+        if ($request->hasFile('pro_imagen')) {
+            $file = $request->file('pro_imagen');
+            $ext = strtolower($file->getClientOriginalExtension());
+            if (!in_array($ext, ['jpg', 'jpeg', 'pdf'], true)) {
+                return back()->withErrors([
+                    'pro_imagen' => 'Solo se permiten archivos JPG o PDF.'
+                ])->withInput();
+            }
+        }
+
         try {
-            $data = $request->all();
+            $data = [
+                // pro_nombre NO se edita (solo visible en el form)
+                'pro_descripcion'   => $request->pro_descripcion !== '' ? $request->pro_descripcion : null,
+                'id_categoria'      => $request->id_categoria ?: null,
+
+                'pro_valor_compra'  => $request->pro_valor_compra ?? $producto->pro_valor_compra,
+                'pro_precio_venta'  => $request->pro_precio_venta,
+
+                // promociones
+                'pro_etiqueta'      => $request->pro_etiqueta ?: null,
+                'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
+
+                // stock (solo hidden inputs)
+                'pro_saldo_inicial' => $request->pro_saldo_inicial,
+                'pro_qty_ingresos'  => $request->pro_qty_ingresos,
+                'pro_qty_egresos'   => $request->pro_qty_egresos,
+                'pro_qty_ajustes'   => $request->pro_qty_ajustes,
+                'pro_saldo_final'   => $request->pro_saldo_final,
+            ];
+
+            // ✅ si sube nueva imagen: reemplaza
+            if ($request->hasFile('pro_imagen') && $request->file('pro_imagen')->isValid()) {
+                // borrar anterior si existe
+                if ($producto->pro_imagen && Storage::disk('public')->exists($producto->pro_imagen)) {
+                    Storage::disk('public')->delete($producto->pro_imagen);
+                }
+
+                $file = $request->file('pro_imagen');
+                $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+                $filename = $producto->id_producto . '.' . $ext;
+                $path = $file->storeAs('productos', $filename, 'public');
+                $data['pro_imagen'] = $path;
+            }
+
             $producto->actualizarProductoTx($data);
 
             return redirect()->route('productos.index')
@@ -257,6 +317,7 @@ class ProductoController extends Controller
                 ->withInput();
         }
     }
+
     public function destroy($id)
     {
         $producto = Producto::buscarPorId($id);
@@ -290,6 +351,7 @@ class ProductoController extends Controller
                 ->with('error', $this->msg('gen.error'));
         }
     }
+
     public function buscar(Request $request)
     {
         $perPage = (int) $request->get('per_page', 10);
@@ -298,7 +360,10 @@ class ProductoController extends Controller
         }
 
         $orden     = $request->input('orden');
-        $categoria = $request->input('pro_categoria');
+
+        // ahora el filtro debe venir como id_categoria
+        $categoria = $request->input('id_categoria');
+
         $unidad    = $request->input('unidad_medida');
 
         $tieneOrden     = ($orden !== null && $orden !== '');

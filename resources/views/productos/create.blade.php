@@ -7,23 +7,33 @@
         <form method="POST" action="{{ route('productos.store') }}" enctype="multipart/form-data">
             @csrf
 
+            {{-- ✅ NUEVO: NOMBRE (arriba de Descripción) --}}
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text"
+                       class="form-control"
+                       name="pro_nombre"
+                       value="{{ old('pro_nombre') }}"
+                       required>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label">Descripción</label>
                 <input type="text"
                        class="form-control"
                        name="pro_descripcion"
-                       value="{{ old('pro_descripcion') }}"
-                       required>
+                       value="{{ old('pro_descripcion') }}">
             </div>
 
+            {{-- ✅ categoria ahora se guarda en id_categoria (integer) --}}
             <div class="mb-3">
                 <label class="form-label">Categoría</label>
-                <select class="form-select" name="pro_categoria" required>
+                <select class="form-select" name="id_categoria" required>
                     <option value="">Seleccione categoría</option>
-                    <option value="Alimentos" {{ old('pro_categoria')=='Alimentos' ? 'selected' : '' }}>Alimentos</option>
-                    <option value="Medicinas" {{ old('pro_categoria')=='Medicinas' ? 'selected' : '' }}>Medicinas</option>
-                    <option value="Ropa"      {{ old('pro_categoria')=='Ropa' ? 'selected' : '' }}>Ropa</option>
-                    <option value="Otros"     {{ old('pro_categoria')=='Otros' ? 'selected' : '' }}>Otros</option>
+                    <option value="1" {{ old('id_categoria')=='1' ? 'selected' : '' }}>Alimentos</option>
+                    <option value="2" {{ old('id_categoria')=='2' ? 'selected' : '' }}>Medicinas</option>
+                    <option value="3" {{ old('id_categoria')=='3' ? 'selected' : '' }}>Ropa</option>
+                    <option value="4" {{ old('id_categoria')=='4' ? 'selected' : '' }}>Otros</option>
                 </select>
             </div>
 
@@ -38,6 +48,28 @@
                         </option>
                     @endforeach
                 </select>
+            </div>
+
+            {{-- ✅ NUEVO: etiqueta de promo (manual) --}}
+            <div class="mb-3">
+                <label class="form-label">Etiqueta (promo)</label>
+                <input type="text"
+                       class="form-control"
+                       name="pro_etiqueta"
+                       value="{{ old('pro_etiqueta') }}"
+                       placeholder="Ej: oferta, descuento %, promo especial...">
+            </div>
+
+            {{-- ✅ NUEVO: destacado para portada --}}
+            <div class="form-check mb-3">
+                <input class="form-check-input"
+                       type="checkbox"
+                       name="pro_es_destacado"
+                       id="pro_es_destacado"
+                    {{ old('pro_es_destacado') ? 'checked' : '' }}>
+                <label class="form-check-label" for="pro_es_destacado">
+                    Producto destacado (aparece en portada)
+                </label>
             </div>
 
             <div class="mb-3">

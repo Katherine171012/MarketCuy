@@ -3,20 +3,32 @@
         Editar producto: {{ $productoEditar->id_producto }}
     </div>
 
+    @php
+        $catMap = [1=>'Alimentos', 2=>'Medicinas', 3=>'Ropa', 4=>'Otros'];
+        $catActual = $catMap[$productoEditar->id_categoria] ?? $productoEditar->id_categoria;
+
+        $imgUrl = null;
+        if (!empty($productoEditar->pro_imagen)) {
+            $imgUrl = asset('storage/' . ltrim($productoEditar->pro_imagen, '/'));
+        }
+    @endphp
+
     <div class="card-body">
         <form method="POST" action="{{ route('productos.update', $productoEditar->id_producto) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
+            {{-- ===== CABECERA ===== --}}
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">ID</label>
                     <input type="text" class="form-control" value="{{ $productoEditar->id_producto }}" disabled>
                 </div>
 
+                {{-- ✅ NOMBRE visible pero NO editable --}}
                 <div class="col-md-8">
-                    <label class="form-label">Descripción</label>
-                    <input type="text" class="form-control" value="{{ $productoEditar->pro_descripcion }}" disabled>
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" value="{{ $productoEditar->pro_nombre }}" disabled>
                 </div>
 
                 <div class="col-md-6">
@@ -53,24 +65,21 @@
 
             <hr class="my-4 text-muted">
 
+            {{-- ✅ DESCRIPCIÓN SÍ se edita (solo la descripción) --}}
+            <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <input type="text"
+                       name="pro_descripcion"
+                       class="form-control"
+                       value="{{ old('pro_descripcion', $productoEditar->pro_descripcion) }}">
+            </div>
+
+            {{-- ===== PROMOS ===== --}}
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Categoría</label>
-                    <select name="pro_categoria" class="form-select" required>
-                        <option value="">Seleccione categoría</option>
-                        <option value="Alimentos"  {{ $productoEditar->pro_categoria == 'Alimentos' ? 'selected' : '' }}>Alimentos</option>
-                        <option value="Medicinas"  {{ $productoEditar->pro_categoria == 'Medicinas' ? 'selected' : '' }}>Medicinas</option>
-                        <option value="Ropa"       {{ $productoEditar->pro_categoria == 'Ropa' ? 'selected' : '' }}>Ropa</option>
-                        <option value="Otros"      {{ $productoEditar->pro_categoria == 'Otros' ? 'selected' : '' }}>Otros</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Precio compra</label>
-                    <input type="number" step="0.01" min="0"
-                           name="pro_valor_compra"
-                           class="form-control"
-                           value="{{ old('pro_valor_compra', $productoEditar->pro_valor_compra) }}">
+                    <label class="form-label">Precio antes</label>
+                    <input type="number" step="0.01" class="form-control"
+                           value="{{ $productoEditar->pro_precio_antes }}" disabled>
                 </div>
 
                 <div class="col-md-4">
@@ -83,27 +92,100 @@
                 </div>
 
                 <div class="col-md-4">
+                    <label class="form-label">Etiqueta (promo)</label>
+                    <input type="text"
+                           name="pro_etiqueta"
+                           class="form-control"
+                           value="{{ old('pro_etiqueta', $productoEditar->pro_etiqueta) }}"
+                           placeholder="Ej: oferta, descuento %, promo especial...">
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check mt-1">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="pro_es_destacado"
+                               id="pro_es_destacado"
+                            {{ old('pro_es_destacado', (bool)$productoEditar->pro_es_destacado) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="pro_es_destacado">
+                            Producto destacado (aparece en portada)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4 text-muted">
+
+            {{-- ===== CATEGORÍA / COSTO ===== --}}
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">Categoría</label>
+                    <select name="id_categoria" class="form-select" required>
+                        <option value="">Seleccione categoría</option>
+                        <option value="1" {{ (int)$productoEditar->id_categoria === 1 ? 'selected' : '' }}>Alimentos</option>
+                        <option value="2" {{ (int)$productoEditar->id_categoria === 2 ? 'selected' : '' }}>Medicinas</option>
+                        <option value="3" {{ (int)$productoEditar->id_categoria === 3 ? 'selected' : '' }}>Ropa</option>
+                        <option value="4" {{ (int)$productoEditar->id_categoria === 4 ? 'selected' : '' }}>Otros</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Precio compra</label>
+                    <input type="number" step="0.01" min="0"
+                           name="pro_valor_compra"
+                           class="form-control"
+                           value="{{ old('pro_valor_compra', $productoEditar->pro_valor_compra) }}">
+                </div>
+
+                {{-- ✅ EDITAR FOTO (permitido) --}}
+                <div class="col-md-4">
+                    <label class="form-label">Cambiar foto (opcional)</label>
+                    <input type="file"
+                           class="form-control"
+                           name="pro_imagen"
+                           accept=".jpg,.jpeg,.pdf">
+                    <div class="form-text">Solo se permiten JPG o PDF.</div>
+                </div>
+
+                @if($imgUrl)
+                    <div class="col-12">
+                        <div class="p-2 border rounded bg-light d-flex align-items-center gap-3">
+                            <img src="{{ $imgUrl }}" alt="Imagen actual" style="width:72px;height:72px;object-fit:cover;border-radius:10px;">
+                            <div class="small text-muted">
+                                Imagen actual: <span class="fw-semibold">{{ $productoEditar->pro_imagen }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <hr class="my-4 text-muted">
+
+            {{-- ===== STOCK (NO editable, se envía hidden como antes) ===== --}}
+            <div class="row g-3">
+                <div class="col-md-4">
                     <label class="form-label">Stock inicial</label>
-                    <input type="number" class="form-control"
-                           value="{{ $productoEditar->pro_saldo_inicial }}" disabled>
+                    <input type="number" class="form-control" value="{{ $productoEditar->pro_saldo_inicial }}" disabled>
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Ingresos</label>
-                    <input type="number" class="form-control"
-                           value="{{ $productoEditar->pro_qty_ingresos }}" disabled>
+                    <input type="number" class="form-control" value="{{ $productoEditar->pro_qty_ingresos }}" disabled>
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label">Egresos</label>
-                    <input type="number" class="form-control"
-                           value="{{ $productoEditar->pro_qty_egresos }}" disabled>
+                    <input type="number" class="form-control" value="{{ $productoEditar->pro_qty_egresos }}" disabled>
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label">Stock final </label>
-                    <input type="number" class="form-control"
-                           value="{{ $productoEditar->pro_saldo_final }}" disabled>
+                    <label class="form-label">Ajustes</label>
+                    <input type="number" class="form-control" value="{{ $productoEditar->pro_qty_ajustes }}" disabled>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Stock final</label>
+                    <input type="number" class="form-control" value="{{ $productoEditar->pro_saldo_final }}" disabled>
                 </div>
             </div>
 
