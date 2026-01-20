@@ -17,7 +17,6 @@ class Producto extends Model
     protected $fillable = [
         'id_producto',
 
-        // NUEVO: nombre y descripcion separadas
         'pro_nombre',
         'pro_descripcion',
 
@@ -26,7 +25,6 @@ class Producto extends Model
         'pro_valor_compra',
         'pro_precio_venta',
 
-        // NUEVO: promociones / métricas / portada
         'pro_precio_antes',
         'pro_etiqueta',
         'pro_es_destacado',
@@ -106,7 +104,6 @@ class Producto extends Model
         $query = self::queryActivos();
 
         if ($categoria !== null && $categoria !== '') {
-            // ahora el campo real es id_categoria (integer)
             $query->where('id_categoria', (int) $categoria);
         }
 
@@ -140,7 +137,6 @@ class Producto extends Model
         return $query->paginate($perPage);
     }
 
-    // NUEVO: validar duplicado por NOMBRE (ya no por descripcion)
     public static function existeNombre(string $nombre): bool
     {
         return self::whereRaw('LOWER(pro_nombre) = ?', [mb_strtolower(trim($nombre))])->exists();
@@ -174,7 +170,6 @@ class Producto extends Model
         return self::create([
             'id_producto'       => $idProducto,
 
-            // nombre y descripcion separados
             'pro_nombre'        => $data['pro_nombre'],
             'pro_descripcion'   => $data['pro_descripcion'] ?? null,
 
@@ -183,7 +178,6 @@ class Producto extends Model
             'pro_valor_compra'  => $data['pro_valor_compra'] ?? 0,
             'pro_precio_venta'  => $data['pro_precio_venta'],
 
-            // trigger llenará pro_precio_antes cuando se edite pro_precio_venta
             'pro_precio_antes'  => $data['pro_precio_antes'] ?? null,
             'pro_etiqueta'      => $data['pro_etiqueta'] ?? null,
             'pro_es_destacado'  => (bool) ($data['pro_es_destacado'] ?? false),
@@ -196,10 +190,7 @@ class Producto extends Model
             'pro_saldo_final'   => $data['pro_saldo_inicial'],
 
             'estado_prod'       => 'ACT',
-
-            // ahora es id_categoria
             'id_categoria'      => $data['id_categoria'] ?? null,
-
             'pro_imagen'        => $data['pro_imagen'] ?? null,
         ]);
     }
@@ -207,22 +198,22 @@ class Producto extends Model
     public function actualizarProducto(array $data)
     {
         return $this->update([
-            // nombre NO se edita (se queda como está)
-            // 'pro_nombre' => ...
-
-            // descripcion sí (si viene)
             'pro_descripcion'   => array_key_exists('pro_descripcion', $data)
                 ? ($data['pro_descripcion'] !== '' ? $data['pro_descripcion'] : null)
                 : $this->pro_descripcion,
 
             'pro_valor_compra'  => $data['pro_valor_compra'] ?? $this->pro_valor_compra,
             'pro_precio_venta'  => $data['pro_precio_venta'],
+
             'pro_precio_antes'  => array_key_exists('pro_precio_antes', $data)
                 ? ($data['pro_precio_antes'] === '' ? null : $data['pro_precio_antes'])
                 : $this->pro_precio_antes,
 
-            // trigger manejará pro_precio_antes al cambiar pro_precio_venta
-            'pro_etiqueta'      => $data['pro_etiqueta'] ?? $this->pro_etiqueta,
+            // ✅ CLAVE: permitir limpiar etiqueta (guardar NULL)
+            'pro_etiqueta'      => array_key_exists('pro_etiqueta', $data)
+                ? ($data['pro_etiqueta'] === '' ? null : $data['pro_etiqueta'])
+                : $this->pro_etiqueta,
+
             'pro_es_destacado'  => (bool) ($data['pro_es_destacado'] ?? false),
 
             'pro_saldo_inicial' => (int) $data['pro_saldo_inicial'],
@@ -232,8 +223,6 @@ class Producto extends Model
             'pro_saldo_final'   => (int) $data['pro_saldo_final'],
 
             'id_categoria'      => $data['id_categoria'] ?? $this->id_categoria,
-
-            // imagen (si viene seteada desde controller)
             'pro_imagen'        => $data['pro_imagen'] ?? $this->pro_imagen,
         ]);
     }
