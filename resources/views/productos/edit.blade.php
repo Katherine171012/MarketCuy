@@ -71,8 +71,12 @@
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Precio antes</label>
-                    <input type="number" step="0.01" class="form-control"
-                           value="{{ $productoEditar->pro_precio_antes }}" disabled>
+                    <input type="number" step="0.01" min="0"
+                           name="pro_precio_antes"
+                           class="form-control"
+                           value="{{ old('pro_precio_antes', $productoEditar->pro_precio_antes) }}"
+                           placeholder="Obligatorio si etiqueta es Oferta">
+                    <div class="form-text">Si se llena, debe ser mayor al precio de venta.</div>
                 </div>
 
                 <div class="col-md-4">

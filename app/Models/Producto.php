@@ -217,6 +217,9 @@ class Producto extends Model
 
             'pro_valor_compra'  => $data['pro_valor_compra'] ?? $this->pro_valor_compra,
             'pro_precio_venta'  => $data['pro_precio_venta'],
+            'pro_precio_antes'  => array_key_exists('pro_precio_antes', $data)
+                ? ($data['pro_precio_antes'] === '' ? null : $data['pro_precio_antes'])
+                : $this->pro_precio_antes,
 
             // trigger manejará pro_precio_antes al cambiar pro_precio_venta
             'pro_etiqueta'      => $data['pro_etiqueta'] ?? $this->pro_etiqueta,

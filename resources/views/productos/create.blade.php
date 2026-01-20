@@ -100,6 +100,16 @@
                 </div>
 
                 <div class="col-md-6">
+                    <label class="form-label">Precio antes</label>
+                    <input type="number" step="0.01" min="0"
+                           class="form-control"
+                           name="pro_precio_antes"
+                           value="{{ old('pro_precio_antes') }}"
+                           placeholder="Obligatorio si etiqueta es Oferta">
+                    <div class="form-text">Si se llena, debe ser mayor al precio de venta.</div>
+                </div>
+
+                <div class="col-md-6">
                     <label class="form-label">Stock inicial</label>
                     <input type="number" min="0"
                            class="form-control"

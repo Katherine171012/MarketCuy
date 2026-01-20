@@ -121,6 +121,37 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
+        $etiqueta = trim((string) ($request->pro_etiqueta ?? ''));
+        $esOferta = ($etiqueta !== '') && str_contains(mb_strtolower($etiqueta), 'oferta');
+
+        $precioVenta = (float) $request->pro_precio_venta;
+        $precioAntesRaw = $request->pro_precio_antes;
+        $tienePrecioAntes = !($precioAntesRaw === null || $precioAntesRaw === '');
+
+        if ($esOferta && !$tienePrecioAntes) {
+            return back()->withErrors([
+                'pro_precio_antes' => 'Si la etiqueta es Oferta, debes ingresar el precio antes.'
+            ])->withInput();
+        }
+
+        if ($tienePrecioAntes) {
+            if (!is_numeric($precioAntesRaw)) {
+                return back()->withErrors([
+                    'pro_precio_antes' => 'El precio antes debe ser numérico.'
+                ])->withInput();
+            }
+            if ((float)$precioAntesRaw < 0) {
+                return back()->withErrors([
+                    'pro_precio_antes' => 'El precio antes no puede ser negativo.'
+                ])->withInput();
+            }
+            if ((float)$precioAntesRaw <= $precioVenta) {
+                return back()->withErrors([
+                    'pro_precio_antes' => 'El precio antes debe ser mayor al precio de venta.'
+                ])->withInput();
+            }
+        }
+
         if (
             $request->pro_valor_compra !== null &&
             $request->pro_valor_compra !== '' &&
@@ -162,6 +193,7 @@ class ProductoController extends Controller
                 'pro_valor_compra'  => $request->pro_valor_compra ?? 0,
                 'pro_precio_venta'  => $request->pro_precio_venta,
                 'pro_saldo_inicial' => $request->pro_saldo_inicial,
+                'pro_precio_antes'  => $tienePrecioAntes ? (float) $precioAntesRaw : null,
                 'id_categoria'      => $request->id_categoria ?: null,
 
                 'pro_etiqueta'      => $request->pro_etiqueta ?: null,
@@ -232,6 +264,37 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
+        $etiqueta = trim((string) ($request->pro_etiqueta ?? ''));
+        $esOferta = ($etiqueta !== '') && str_contains(mb_strtolower($etiqueta), 'oferta');
+
+        $precioVenta = (float) $request->pro_precio_venta;
+        $precioAntesRaw = $request->pro_precio_antes;
+        $tienePrecioAntes = !($precioAntesRaw === null || $precioAntesRaw === '');
+
+        if ($esOferta && !$tienePrecioAntes) {
+            return back()->withErrors([
+                'pro_precio_antes' => 'Si la etiqueta es Oferta, debes ingresar el precio antes.'
+            ])->withInput();
+        }
+
+        if ($tienePrecioAntes) {
+            if (!is_numeric($precioAntesRaw)) {
+                return back()->withErrors([
+                    'pro_precio_antes' => 'El precio antes debe ser numérico.'
+                ])->withInput();
+            }
+            if ((float)$precioAntesRaw < 0) {
+                return back()->withErrors([
+                    'pro_precio_antes' => 'El precio antes no puede ser negativo.'
+                ])->withInput();
+            }
+            if ((float)$precioAntesRaw <= $precioVenta) {
+                return back()->withErrors([
+                    'pro_precio_antes' => 'El precio antes debe ser mayor al precio de venta.'
+                ])->withInput();
+            }
+        }
+
         $nums = [
             'pro_saldo_inicial',
             'pro_qty_ingresos',
@@ -265,6 +328,7 @@ class ProductoController extends Controller
 
                 'pro_valor_compra'  => $request->pro_valor_compra ?? $producto->pro_valor_compra,
                 'pro_precio_venta'  => $request->pro_precio_venta,
+                'pro_precio_antes'  => $tienePrecioAntes ? (float) $precioAntesRaw : null,
 
                 'pro_etiqueta'      => $request->pro_etiqueta ?: null,
                 'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
