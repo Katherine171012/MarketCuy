@@ -115,41 +115,21 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
-        if ($request->pro_precio_venta < 0) {
+        // ✅ Regla: nunca 0
+        if ((float)$request->pro_precio_venta <= 0) {
             return back()->withErrors([
-                'pro_precio_venta' => $this->msg('M31')
+                'pro_precio_venta' => 'El precio de venta debe ser mayor a 0.'
             ])->withInput();
         }
 
         $etiqueta = trim((string) ($request->pro_etiqueta ?? ''));
-        $esOferta = ($etiqueta !== '') && str_contains(mb_strtolower($etiqueta), 'oferta');
+        $esOferta = (mb_strtolower($etiqueta) === 'oferta');
 
-        $precioVenta = (float) $request->pro_precio_venta;
-        $precioAntesRaw = $request->pro_precio_antes;
-        $tienePrecioAntes = !($precioAntesRaw === null || $precioAntesRaw === '');
-
-        if ($esOferta && !$tienePrecioAntes) {
+        // Mantengo tu lógica: "Oferta" no nace al crear, solo al editar y bajar precio
+        if ($esOferta) {
             return back()->withErrors([
-                'pro_precio_antes' => 'Si la etiqueta es Oferta, debes ingresar el precio antes.'
+                'pro_etiqueta' => 'La etiqueta "Oferta" se genera al modificar el precio de venta (no al crear un producto nuevo).'
             ])->withInput();
-        }
-
-        if ($tienePrecioAntes) {
-            if (!is_numeric($precioAntesRaw)) {
-                return back()->withErrors([
-                    'pro_precio_antes' => 'El precio antes debe ser numérico.'
-                ])->withInput();
-            }
-            if ((float)$precioAntesRaw < 0) {
-                return back()->withErrors([
-                    'pro_precio_antes' => 'El precio antes no puede ser negativo.'
-                ])->withInput();
-            }
-            if ((float)$precioAntesRaw <= $precioVenta) {
-                return back()->withErrors([
-                    'pro_precio_antes' => 'El precio antes debe ser mayor al precio de venta.'
-                ])->withInput();
-            }
         }
 
         if (
@@ -193,12 +173,16 @@ class ProductoController extends Controller
                 'pro_valor_compra'  => $request->pro_valor_compra ?? 0,
                 'pro_precio_venta'  => $request->pro_precio_venta,
                 'pro_saldo_inicial' => $request->pro_saldo_inicial,
-                'pro_precio_antes'  => $tienePrecioAntes ? (float) $precioAntesRaw : null,
+
+                // producto nuevo NO tiene precio antes
+                'pro_precio_antes'  => null,
+
                 'id_categoria'      => $request->id_categoria ?: null,
 
-                'pro_etiqueta'      => $request->pro_etiqueta ?: null,
-                'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
+                // etiqueta desde select (si no hay, null)
+                'pro_etiqueta'      => $etiqueta !== '' ? $etiqueta : null,
 
+                'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
                 'pro_clicks_count'  => 0,
             ];
 
@@ -258,41 +242,25 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
-        if ($request->pro_precio_venta < 0) {
+        // ✅ Regla: nunca 0
+        if ((float)$request->pro_precio_venta <= 0) {
             return back()->withErrors([
-                'pro_precio_venta' => $this->msg('M31')
+                'pro_precio_venta' => 'El precio de venta debe ser mayor a 0.'
             ])->withInput();
         }
+
+        $precioVentaAnterior = (float) $producto->pro_precio_venta;
+        $precioVentaNuevo    = (float) $request->pro_precio_venta;
 
         $etiqueta = trim((string) ($request->pro_etiqueta ?? ''));
-        $esOferta = ($etiqueta !== '') && str_contains(mb_strtolower($etiqueta), 'oferta');
+        $tieneEtiqueta = ($etiqueta !== '');
+        $esOferta = (mb_strtolower($etiqueta) === 'oferta');
 
-        $precioVenta = (float) $request->pro_precio_venta;
-        $precioAntesRaw = $request->pro_precio_antes;
-        $tienePrecioAntes = !($precioAntesRaw === null || $precioAntesRaw === '');
-
-        if ($esOferta && !$tienePrecioAntes) {
+        // ✅ Regla: SOLO si es "Oferta" exige descuento
+        if ($tieneEtiqueta && $esOferta && $precioVentaNuevo >= $precioVentaAnterior) {
             return back()->withErrors([
-                'pro_precio_antes' => 'Si la etiqueta es Oferta, debes ingresar el precio antes.'
+                'pro_precio_venta' => 'Para "Oferta", el nuevo precio de venta debe ser menor al precio anterior.'
             ])->withInput();
-        }
-
-        if ($tienePrecioAntes) {
-            if (!is_numeric($precioAntesRaw)) {
-                return back()->withErrors([
-                    'pro_precio_antes' => 'El precio antes debe ser numérico.'
-                ])->withInput();
-            }
-            if ((float)$precioAntesRaw < 0) {
-                return back()->withErrors([
-                    'pro_precio_antes' => 'El precio antes no puede ser negativo.'
-                ])->withInput();
-            }
-            if ((float)$precioAntesRaw <= $precioVenta) {
-                return back()->withErrors([
-                    'pro_precio_antes' => 'El precio antes debe ser mayor al precio de venta.'
-                ])->withInput();
-            }
         }
 
         $nums = [
@@ -327,10 +295,11 @@ class ProductoController extends Controller
                 'id_categoria'      => $request->id_categoria ?: null,
 
                 'pro_valor_compra'  => $request->pro_valor_compra ?? $producto->pro_valor_compra,
-                'pro_precio_venta'  => $request->pro_precio_venta,
-                'pro_precio_antes'  => $tienePrecioAntes ? (float) $precioAntesRaw : null,
+                'pro_precio_venta'  => $precioVentaNuevo,
 
-                'pro_etiqueta'      => $request->pro_etiqueta ?: null,
+                // ✅ si queda vacío, se limpia (NULL) y ya no debe mostrarse
+                'pro_etiqueta'      => $tieneEtiqueta ? $etiqueta : null,
+
                 'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
 
                 'pro_saldo_inicial' => $request->pro_saldo_inicial,
@@ -339,6 +308,14 @@ class ProductoController extends Controller
                 'pro_qty_ajustes'   => $request->pro_qty_ajustes,
                 'pro_saldo_final'   => $request->pro_saldo_final,
             ];
+
+            // ✅ "Precio antes" solo aplica a "Oferta"
+            if ($tieneEtiqueta && $esOferta) {
+                $data['pro_precio_antes'] = $precioVentaAnterior;
+            } else {
+                // sin etiqueta / etiqueta distinta a Oferta => no hay promo visual
+                $data['pro_precio_antes'] = null;
+            }
 
             if ($request->hasFile('pro_imagen') && $request->file('pro_imagen')->isValid()) {
                 if ($producto->pro_imagen && Storage::disk('public')->exists($producto->pro_imagen)) {

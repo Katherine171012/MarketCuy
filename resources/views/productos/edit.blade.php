@@ -8,6 +8,9 @@
         if (!empty($productoEditar->pro_imagen)) {
             $imgUrl = asset('storage/' . ltrim($productoEditar->pro_imagen, '/'));
         }
+
+        $etqVal = trim((string) old('pro_etiqueta', $productoEditar->pro_etiqueta));
+        $etqValLower = mb_strtolower($etqVal);
     @endphp
 
     <div class="card-body">
@@ -72,11 +75,12 @@
                 <div class="col-md-4">
                     <label class="form-label">Precio antes</label>
                     <input type="number" step="0.01" min="0"
-                           name="pro_precio_antes"
                            class="form-control"
-                           value="{{ old('pro_precio_antes', $productoEditar->pro_precio_antes) }}"
-                           placeholder="Obligatorio si etiqueta es Oferta">
-                    <div class="form-text">Si se llena, debe ser mayor al precio de venta.</div>
+                           value="{{ number_format((float)$productoEditar->pro_precio_venta, 2, '.', '') }}"
+                           disabled>
+                    <div class="form-text">
+                        Para "Oferta", el nuevo precio de venta debe ser menor a este valor.
+                    </div>
                 </div>
 
                 <div class="col-md-4">
@@ -89,12 +93,14 @@
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label">Etiqueta (promo)</label>
-                    <input type="text"
-                           name="pro_etiqueta"
-                           class="form-control"
-                           value="{{ old('pro_etiqueta', $productoEditar->pro_etiqueta) }}"
-                           placeholder="Ej: oferta, descuento %, promo especial...">
+                    <label class="form-label">Etiqueta</label>
+                    <select class="form-select" name="pro_etiqueta">
+                        <option value="" {{ $etqValLower === '' ? 'selected' : '' }}>Sin etiqueta</option>
+                        <option value="Oferta" {{ $etqValLower === 'oferta' ? 'selected' : '' }}>Oferta</option>
+                        <option value="Más vendido" {{ $etqValLower === mb_strtolower('Más vendido') ? 'selected' : '' }}>Más vendido</option>
+                        <option value="Recomendado" {{ $etqValLower === 'recomendado' ? 'selected' : '' }}>Recomendado</option>
+                        <option value="Edición limitada" {{ $etqValLower === mb_strtolower('Edición limitada') ? 'selected' : '' }}>Edición limitada</option>
+                    </select>
                 </div>
 
                 <div class="col-12">

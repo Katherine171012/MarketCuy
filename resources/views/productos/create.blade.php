@@ -50,13 +50,19 @@
                 </select>
             </div>
 
+            @php
+                $etqOld = trim((string) old('pro_etiqueta', ''));
+                $etqOldLower = mb_strtolower($etqOld);
+            @endphp
             <div class="mb-3">
-                <label class="form-label">Etiqueta (promo)</label>
-                <input type="text"
-                       class="form-control"
-                       name="pro_etiqueta"
-                       value="{{ old('pro_etiqueta') }}"
-                       placeholder="Ej: oferta, descuento %, promo especial...">
+                <label class="form-label">Etiqueta</label>
+                <select class="form-select" name="pro_etiqueta">
+                    <option value="" {{ $etqOldLower === '' ? 'selected' : '' }}>Sin etiqueta</option>
+                    <option value="Oferta" {{ $etqOldLower === 'oferta' ? 'selected' : '' }}>Oferta</option>
+                    <option value="Más vendido" {{ $etqOldLower === mb_strtolower('Más vendido') ? 'selected' : '' }}>Más vendido</option>
+                    <option value="Recomendado" {{ $etqOldLower === 'recomendado' ? 'selected' : '' }}>Recomendado</option>
+                    <option value="Edición limitada" {{ $etqOldLower === mb_strtolower('Edición limitada') ? 'selected' : '' }}>Edición limitada</option>
+                </select>
             </div>
 
             <div class="form-check mb-3">
@@ -97,16 +103,6 @@
                            name="pro_precio_venta"
                            value="{{ old('pro_precio_venta') }}"
                            required>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Precio antes</label>
-                    <input type="number" step="0.01" min="0"
-                           class="form-control"
-                           name="pro_precio_antes"
-                           value="{{ old('pro_precio_antes') }}"
-                           placeholder="Obligatorio si etiqueta es Oferta">
-                    <div class="form-text">Si se llena, debe ser mayor al precio de venta.</div>
                 </div>
 
                 <div class="col-md-6">
