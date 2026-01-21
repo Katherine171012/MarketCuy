@@ -281,4 +281,41 @@ class Producto extends Model
             throw $e;
         }
     }
+    public static function obtenerValoresCompraPorIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        // Normalizar IDs (por seguridad)
+        $ids = array_map(fn($v) => trim((string)$v), $ids);
+
+        $rows = self::query()
+            ->selectRaw('TRIM(id_producto) as id_producto, pro_valor_compra')
+            ->whereIn(DB::raw('TRIM(id_producto)'), $ids)
+            ->where('estado_prod', 'ACT')
+            ->get()
+            ->keyBy('id_producto');
+
+        $valores = [];
+
+        foreach ($ids as $id) {
+            if (!isset($rows[$id])) {
+                throw new \Exception("Producto no encontrado o inactivo: {$id}");
+            }
+
+            $valor = $rows[$id]->pro_valor_compra;
+
+            if ($valor === null) {
+                throw new \Exception("Producto {$id} no tiene valor de compra");
+            }
+
+            $valores[] = (float) $valor;
+        }
+
+        return $valores;
+    }
+
+
+
 }
