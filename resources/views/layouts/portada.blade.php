@@ -4,17 +4,9 @@
 
 @section('contenido')
 
-    <style>
-        /* Ajustes solo para la portada */
-        .card-modulo { min-height: 220px; }
-        .card-modulo h5 { font-size: 1.25rem; }
-        .card-modulo p { font-size: 0.95rem; }
-        .btn-modulo { padding: 12px 16px; font-size: 1rem; border-radius: 8px; }
-    </style>
-
     <div class="py-4">
         <div class="text-center mb-5">
-            <h1 class="display-5 fw-bold mb-2" style="color:#660404;">
+            <h1 class="display-5 fw-bold mb-2 text-concho">
                 MarketCuy
             </h1>
             <p class="text-muted fs-5 mb-0">
@@ -23,8 +15,9 @@
         </div>
 
         <div class="row g-5 justify-content-center">
+
             <div class="col-12 col-md-6 col-xl-5">
-                <div class="card shadow card-modulo border-0 text-center">
+                <div class="card shadow border-0 text-center">
                     <div class="card-body p-4">
                         <div class="mb-3">
                             <h5 class="fw-semibold mb-1">Clientes</h5>
@@ -32,8 +25,7 @@
                         </div>
                         <hr>
                         <a href="{{ route('clientes.index') }}"
-                           class="btn text-white w-100 btn-modulo"
-                           style="background-color:#660404;">
+                           class="btn btn-concho w-100">
                             Entrar a Clientes
                         </a>
                     </div>
@@ -41,7 +33,7 @@
             </div>
 
             <div class="col-12 col-md-6 col-xl-5">
-                <div class="card shadow card-modulo border-0 text-center">
+                <div class="card shadow border-0 text-center">
                     <div class="card-body p-4">
                         <div class="mb-3">
                             <h5 class="fw-semibold mb-1">Productos</h5>
@@ -49,31 +41,28 @@
                         </div>
                         <hr>
                         <a href="{{ route('productos.index') }}"
-                           class="btn text-white w-100 btn-modulo"
-                           style="background-color:#660404;">
+                           class="btn btn-concho w-100">
                             Entrar a Productos
                         </a>
                     </div>
                 </div>
             </div>
 
-            {{-- NUEVO: COMPRAS / ÓRDENES DE COMPRA --}}
             <div class="col-12 col-md-6 col-xl-5">
-                <div class="card shadow card-modulo border-0 text-center">
+                <div class="card shadow border-0 text-center">
                     <div class="card-body p-4">
                         <div class="mb-3">
                             <h5 class="fw-semibold mb-1">Compras</h5>
                             <p class="text-muted mb-0">Órdenes de compra y control</p>
                         </div>
                         <hr>
-                        @if(\Illuminate\Support\Facades\Route::has('compras.index'))
+                        @if(Route::has('compras.index'))
                             <a href="{{ route('compras.index') }}"
-                               class="btn text-white w-100 btn-modulo"
-                               style="background-color:#660404;">
+                               class="btn btn-concho w-100">
                                 Entrar a Compras
                             </a>
                         @else
-                            <button class="btn btn-outline-dark w-100 btn-modulo" disabled>
+                            <button class="btn btn-outline-dark w-100" disabled>
                                 Módulo aún no conectado
                             </button>
                         @endif
@@ -82,21 +71,20 @@
             </div>
 
             <div class="col-12 col-md-6 col-xl-5">
-                <div class="card shadow card-modulo border-0 text-center">
+                <div class="card shadow border-0 text-center">
                     <div class="card-body p-4">
                         <div class="mb-3">
                             <h5 class="fw-semibold mb-1">Facturas</h5>
                             <p class="text-muted mb-0">Ventas, cobros y emisión</p>
                         </div>
                         <hr>
-                        @if(\Illuminate\Support\Facades\Route::has('facturas.index'))
+                        @if(Route::has('facturas.index'))
                             <a href="{{ route('facturas.index') }}"
-                               class="btn text-white w-100 btn-modulo"
-                               style="background-color:#660404;">
+                               class="btn btn-concho w-100">
                                 Entrar a Facturas
                             </a>
                         @else
-                            <button class="btn btn-outline-dark w-100 btn-modulo" disabled>
+                            <button class="btn btn-outline-dark w-100" disabled>
                                 Módulo aún no conectado
                             </button>
                         @endif
@@ -105,21 +93,20 @@
             </div>
 
             <div class="col-12 col-md-6 col-xl-5">
-                <div class="card shadow card-modulo border-0 text-center">
+                <div class="card shadow border-0 text-center">
                     <div class="card-body p-4">
                         <div class="mb-3">
                             <h5 class="fw-semibold mb-1">Proveedores</h5>
                             <p class="text-muted mb-0">Registro y control de proveedores</p>
                         </div>
                         <hr>
-                        @if(\Illuminate\Support\Facades\Route::has('proveedores.index'))
+                        @if(Route::has('proveedores.index'))
                             <a href="{{ route('proveedores.index') }}"
-                               class="btn text-white w-100 btn-modulo"
-                               style="background-color:#660404;">
+                               class="btn btn-concho w-100">
                                 Entrar a Proveedores
                             </a>
                         @else
-                            <button class="btn btn-outline-dark w-100 btn-modulo" disabled>
+                            <button class="btn btn-outline-dark w-100" disabled>
                                 Módulo aún no conectado
                             </button>
                         @endif
@@ -129,4 +116,5 @@
 
         </div>
     </div>
+
 @endsection

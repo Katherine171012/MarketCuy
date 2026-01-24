@@ -1,125 +1,124 @@
-<div class="card">
+<div class="card shadow-sm">
     <div class="card-header fw-semibold">
-        Nuevo producto
+        Crear producto
     </div>
 
     <div class="card-body">
-        <form method="POST" action="{{ route('productos.store') }}" enctype="multipart/form-data">
+        <form method="POST"
+              action="{{ route('productos.store') }}"
+              enctype="multipart/form-data">
             @csrf
 
-            <div class="mb-3">
-                <label class="form-label">Nombre</label>
-                <input type="text"
-                       class="form-control"
-                       name="pro_nombre"
-                       value="{{ old('pro_nombre') }}"
-                       required>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Descripción</label>
-                <input type="text"
-                       class="form-control"
-                       name="pro_descripcion"
-                       value="{{ old('pro_descripcion') }}">
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Categoría</label>
-                <select class="form-select" name="id_categoria" required>
-                    <option value="">Seleccione categoría</option>
-                    @foreach($categorias as $c)
-                        <option value="{{ $c->id_categoria }}"
-                            {{ old('id_categoria') == $c->id_categoria ? 'selected' : '' }}>
-                            {{ $c->cat_nombre }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Unidad de medida</label>
-                <select class="form-select" name="unidad_medida" required>
-                    <option value="">Seleccione unidad de medida</option>
-                    @foreach($unidades as $u)
-                        <option value="{{ $u->id_unidad_medida }}"
-                            {{ old('unidad_medida') == $u->id_unidad_medida ? 'selected' : '' }}>
-                            {{ $u->id_unidad_medida }} - {{ $u->um_descripcion ?? 'Sin descripción' }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            @php
-                $etqOld = trim((string) old('pro_etiqueta', ''));
-                $etqOldLower = mb_strtolower($etqOld);
-            @endphp
-            <div class="mb-3">
-                <label class="form-label">Etiqueta</label>
-                <select class="form-select" name="pro_etiqueta">
-                    <option value="" {{ $etqOldLower === '' ? 'selected' : '' }}>Sin etiqueta</option>
-                    <option value="Oferta" {{ $etqOldLower === 'oferta' ? 'selected' : '' }}>Oferta</option>
-                    <option value="Más vendido" {{ $etqOldLower === mb_strtolower('Más vendido') ? 'selected' : '' }}>Más vendido</option>
-                    <option value="Recomendado" {{ $etqOldLower === 'recomendado' ? 'selected' : '' }}>Recomendado</option>
-                    <option value="Edición limitada" {{ $etqOldLower === mb_strtolower('Edición limitada') ? 'selected' : '' }}>Edición limitada</option>
-                </select>
-            </div>
-
-            <div class="form-check mb-3">
-                <input class="form-check-input"
-                       type="checkbox"
-                       name="pro_es_destacado"
-                       id="pro_es_destacado"
-                    {{ old('pro_es_destacado') ? 'checked' : '' }}>
-                <label class="form-check-label" for="pro_es_destacado">
-                    Producto destacado (aparece en portada)
-                </label>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Imagen del producto (opcional)</label>
-                <input type="file"
-                       class="form-control"
-                       name="pro_imagen"
-                       accept=".jpg,.jpeg,.pdf">
-                <div class="form-text">
-                    Solo se permiten archivos JPG o PDF.
-                </div>
-            </div>
-
             <div class="row g-3">
+
                 <div class="col-md-6">
-                    <label class="form-label">Precio compra</label>
-                    <input type="number" step="0.01" min="0"
+                    <label class="form-label">Nombre</label>
+                    <input type="text"
+                           name="pro_nombre"
                            class="form-control"
+                           value="{{ old('pro_nombre') }}">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Categoría</label>
+                    <select name="id_categoria" class="form-select">
+                        <option value="">Sin categoría</option>
+                        @foreach($categorias as $c)
+                            <option value="{{ $c->id_categoria }}"
+                                {{ (string)old('id_categoria') === (string)$c->id_categoria ? 'selected' : '' }}>
+                                {{ $c->cat_nombre }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label">Descripción</label>
+                    <textarea name="pro_descripcion"
+                              class="form-control"
+                              rows="2">{{ old('pro_descripcion') }}</textarea>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Unidad de medida</label>
+                    <select name="unidad_medida" class="form-select">
+                        @foreach($unidades as $u)
+                            <option value="{{ $u->id_unidad_medida }}"
+                                {{ (string)old('unidad_medida') === (string)$u->id_unidad_medida ? 'selected' : '' }}>
+                                {{ $u->id_unidad_medida }} - {{ $u->um_descripcion }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Valor compra</label>
+                    <input type="number"
+                           step="0.01"
                            name="pro_valor_compra"
-                           value="{{ old('pro_valor_compra') }}">
+                           class="form-control"
+                           value="{{ old('pro_valor_compra', 0) }}">
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Precio venta</label>
-                    <input type="number" step="0.01" min="0"
-                           class="form-control"
+                    <input type="number"
+                           step="0.01"
                            name="pro_precio_venta"
-                           value="{{ old('pro_precio_venta') }}"
-                           required>
+                           class="form-control"
+                           value="{{ old('pro_precio_venta') }}">
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">Stock inicial</label>
-                    <input type="number" min="0"
-                           class="form-control"
+                    <input type="number"
                            name="pro_saldo_inicial"
-                           value="{{ old('pro_saldo_inicial') }}"
-                           required>
+                           class="form-control"
+                           value="{{ old('pro_saldo_inicial', 0) }}">
                 </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Etiqueta</label>
+                    <select name="pro_etiqueta" class="form-select">
+                        <option value="" {{ old('pro_etiqueta') === '' ? 'selected' : '' }}>Ninguna</option>
+                        <option value="Oferta" {{ old('pro_etiqueta') === 'Oferta' ? 'selected' : '' }}>Oferta</option>
+                        <option value="Más vendido" {{ old('pro_etiqueta') === 'Más vendido' ? 'selected' : '' }}>Más vendido</option>
+                        <option value="Nuevo" {{ old('pro_etiqueta') === 'Nuevo' ? 'selected' : '' }}>Nuevo</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Imagen</label>
+                    <input type="file"
+                           name="pro_imagen"
+                           class="form-control">
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               name="pro_es_destacado"
+                            {{ old('pro_es_destacado') ? 'checked' : '' }}>
+                        <label class="form-check-label">
+                            Destacado
+                        </label>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="mt-3">
-                <button class="btn btn-primary" type="submit">
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
                     Guardar
                 </button>
+
+                <a href="{{ route('productos.index') }}"
+                   class="btn btn-secondary">
+                    Cancelar
+                </a>
             </div>
+
         </form>
     </div>
 </div>

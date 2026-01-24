@@ -3,16 +3,9 @@
 @section('titulo', 'MarketCuy')
 
 @section('contenido')
-    @if(session('ok'))
-        <div class="alert alert-success">{{ session('ok') }}</div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
 
     @if($errors->any())
-        <div class="alert alert-danger">
+        <div class="alert alert-danger alert-soft">
             <ul class="mb-0">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -25,21 +18,11 @@
         <div class="alert alert-warning mb-3">{{ $info }}</div>
     @endif
 
-    @php
-        $catMap = [];
-        if (isset($categorias) && $categorias) {
-            foreach ($categorias as $c) {
-                $catMap[$c->id_categoria] = $c->cat_nombre;
-            }
-        }
-    @endphp
-
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <h2 class="h4 mb-0">Módulo Productos</h2>
 
         <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-primary"
-               href="{{ route('productos.index', ['create' => 1]) }}">
+            <a class="btn btn-primary" href="{{ route('productos.index', ['create' => 1]) }}">
                 + Crear nuevo producto
             </a>
 
@@ -82,11 +65,6 @@
         @endif
 
         @if(isset($productoVer) && $productoVer)
-            @php
-                $catVer = $catMap[$productoVer->id_categoria] ?? $productoVer->id_categoria;
-                $imgUrlVer = !empty($productoVer->pro_imagen) ? asset('storage/' . ltrim($productoVer->pro_imagen,'/')) : null;
-            @endphp
-
             <div class="card mb-4">
                 <div class="card-header fw-semibold">
                     Detalle del Producto: {{ $productoVer->id_producto }}
@@ -102,7 +80,7 @@
                             {{ $productoVer->pro_descripcion ?? '—' }}
                         </div>
 
-                        <div class="col-md-4"><strong>Categoría:</strong> {{ $catVer }}</div>
+                        <div class="col-md-4"><strong>Categoría:</strong> {{ $productoVer->categoria_texto }}</div>
 
                         <div class="col-md-4">
                             <strong>Precio:</strong>
@@ -114,10 +92,14 @@
 
                         <div class="col-md-4"><strong>Stock:</strong> {{ $productoVer->pro_saldo_final }}</div>
 
-                        <div class="col-md-4"><strong>UM:</strong> {{ $productoVer->pro_um_compra }}</div>
+                        <div class="col-md-4">
+                            <strong>UM:</strong>
+                            {{ $productoVer->unidad_medida ?? '—' }}
+                        </div>
 
                         <div class="col-md-4">
-                            <strong>Etiqueta:</strong> {{ $productoVer->pro_etiqueta ?? '—' }}
+                            <strong>Etiqueta:</strong>
+                            {{ $productoVer->etiqueta_texto ?? '—' }}
                         </div>
 
                         <div class="col-md-4">
@@ -125,16 +107,16 @@
                             {{ $productoVer->pro_es_destacado ? 'Sí' : 'No' }}
                         </div>
 
-                        @if($imgUrlVer)
-                            <div class="col-12">
-                                <div class="p-2 border rounded bg-light d-flex align-items-center gap-3">
-                                    <img src="{{ $imgUrlVer }}" alt="Imagen" style="width:84px;height:84px;object-fit:cover;border-radius:12px;">
-                                    <div class="small text-muted">
-                                        {{ $productoVer->pro_imagen }}
-                                    </div>
+                        <div class="col-12">
+                            <div class="p-2 border rounded bg-light d-flex align-items-center gap-3">
+                                <img src="{{ $productoVer->imagen_url }}"
+                                     alt="Imagen"
+                                     style="width:84px;height:84px;object-fit:cover;border-radius:12px;">
+                                <div class="small text-muted">
+                                    {{ $productoVer->pro_imagen ?? '' }}
                                 </div>
                             </div>
-                        @endif
+                        </div>
                     </div>
 
                     <div class="mt-3">
@@ -160,39 +142,25 @@
 
                 <tbody>
                 @foreach($productos as $p)
-                    @php
-                        [$badge, $estadoTxt] = match($p->estado_prod) {
-                            'ACT' => ['success', 'Activo'],
-                            'INA' => ['secondary', 'Inactivo'],
-                            default => ['secondary', $p->estado_prod ?? 'Desconocido'],
-                        };
-
-                        $catTxt = $catMap[$p->id_categoria] ?? $p->id_categoria;
-
-                        $imgUrl = !empty($p->pro_imagen) ? asset('storage/' . ltrim($p->pro_imagen,'/')) : null;
-                    @endphp
-
                     <tr>
                         <td class="fw-semibold">{{ $p->id_producto }}</td>
 
                         <td>
-                            <div>
-                                <div class="fw-semibold">
-                                    {{ $p->pro_nombre }}
-                                    @if($p->pro_es_destacado)
-                                        <span class="ms-1 badge bg-warning text-dark">Destacado</span>
-                                    @endif
-                                </div>
-
-                                @if(!empty($p->pro_etiqueta))
-                                    <div class="small">
-                                        <span class="badge bg-info text-dark">{{ $p->pro_etiqueta }}</span>
-                                    </div>
+                            <div class="fw-semibold">
+                                {{ $p->pro_nombre }}
+                                @if($p->pro_es_destacado)
+                                    <span class="ms-1 badge bg-warning text-dark">Destacado</span>
                                 @endif
                             </div>
+
+                            @if($p->etiqueta_texto)
+                                <div class="small">
+                                    <span class="badge bg-info text-dark">{{ $p->etiqueta_texto }}</span>
+                                </div>
+                            @endif
                         </td>
 
-                        <td>{{ $catTxt }}</td>
+                        <td>{{ $p->categoria_texto }}</td>
 
                         <td>
                             @if(!is_null($p->pro_precio_antes))
@@ -206,11 +174,11 @@
                         <td>{{ $p->pro_saldo_final }}</td>
 
                         <td>
-                            <span class="badge bg-{{ $badge }}">{{ $estadoTxt }}</span>
+                            <span class="badge bg-{{ $p->estado_clase }}">{{ $p->estado_texto }}</span>
                         </td>
 
                         <td class="text-center">
-                            @if($p->estado_prod === 'ACT')
+                            @if($p->puede_editar)
                                 @php($modalId = 'modalEliminar_' . preg_replace('/[^A-Za-z0-9\-_]/', '_', $p->id_producto))
 
                                 <a class="btn btn-warning btn-sm"
@@ -228,7 +196,6 @@
                                 <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
-
                                             <div class="modal-header">
                                                 <h5 class="modal-title">Confirmar eliminación</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -247,13 +214,11 @@
                                                 <form method="POST" action="{{ route('productos.destroy', $p->id_producto) }}">
                                                     @csrf
                                                     @method('DELETE')
-
                                                     <button type="submit" class="btn btn-danger">
                                                         Sí, eliminar
                                                     </button>
                                                 </form>
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>

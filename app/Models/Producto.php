@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\UnidadMedida;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class Producto extends Model
 {
@@ -16,295 +16,169 @@ class Producto extends Model
 
     protected $fillable = [
         'id_producto',
-
         'pro_nombre',
         'pro_descripcion',
-
-        'pro_um_compra',
-        'pro_um_venta',
+        'unidad_medida',
         'pro_valor_compra',
         'pro_precio_venta',
-
         'pro_precio_antes',
-        'pro_etiqueta',
-        'pro_es_destacado',
-        'pro_clicks_count',
-
         'pro_saldo_inicial',
         'pro_qty_ingresos',
         'pro_qty_egresos',
         'pro_qty_ajustes',
         'pro_saldo_final',
-
-        'estado_prod',
         'id_categoria',
+        'pro_etiqueta',
+        'pro_es_destacado',
+        'pro_clicks_count',
         'pro_imagen',
+        'estado_prod',
     ];
 
-    public function unidadCompra()
+    /* =========================
+       RELACIONES
+    ========================= */
+
+    public function categoria()
     {
-        return $this->belongsTo(
-            UnidadMedida::class,
-            'pro_um_compra',
-            'id_unidad_medida'
-        );
+        return $this->belongsTo(Categoria::class, 'id_categoria', 'id_categoria');
     }
 
-    public function unidadVenta()
+    public function unidad()
     {
-        return $this->belongsTo(
-            UnidadMedida::class,
-            'pro_um_venta',
-            'id_unidad_medida'
-        );
+        return $this->belongsTo(UnidadMedida::class, 'unidad_medida', 'id_unidad_medida');
     }
 
-    public static function obtenerActivos()
+    /* =========================
+       ACCESSORS (VISTA)
+    ========================= */
+
+    public function getEstadoTextoAttribute(): string
     {
-        return self::where('estado_prod', 'ACT')
-            ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
-            ->get();
+        return $this->estado_prod === 'ACT' ? 'Activo' : 'Inactivo';
     }
 
-    public static function queryActivos()
+    public function getEstadoClaseAttribute(): string
     {
-        return self::query()->whereIn('estado_prod', ['ACT', 'INA']);
+        return $this->estado_prod === 'ACT' ? 'success' : 'secondary';
     }
 
-    public static function obtenerParaLista(int $porPagina = 10)
+    public function getEtiquetaTextoAttribute(): ?string
     {
-        return self::query()
-            ->orderByRaw("CASE
-                WHEN estado_prod = 'ACT' THEN 1
-                WHEN estado_prod = 'INA' THEN 2
-                ELSE 3 END")
-            ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
-            ->paginate($porPagina);
+        return $this->pro_etiqueta ?: null;
     }
 
-    public static function paginarActivos(int $perPage = 10)
+    public function getEsOfertaAttribute(): bool
     {
-        return self::queryActivos()
-            ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
-            ->paginate($perPage);
+        return mb_strtolower((string) $this->pro_etiqueta) === 'oferta'
+            && $this->pro_precio_antes !== null;
     }
 
-    public static function buscarPorId(?string $id): ?self
+    public function getCategoriaTextoAttribute(): string
     {
-        if (!$id) return null;
-        return self::find($id);
+        return $this->categoria?->cat_nombre ?? 'Sin categoría';
     }
 
-    public static function paginarActivosConFiltros(
-        ?string $orden,
-        ?string $categoria,
-        ?string $unidad,
-        int $perPage = 10
-    ) {
-        $query = self::queryActivos();
-
-        if ($categoria !== null && $categoria !== '') {
-            $query->where('id_categoria', (int) $categoria);
+    public function getImagenUrlAttribute(): string
+    {
+        if ($this->pro_imagen && Storage::disk('public')->exists($this->pro_imagen)) {
+            return asset('storage/' . $this->pro_imagen);
         }
+        return asset('img/no-image.png');
+    }
 
-        if ($unidad !== null && $unidad !== '') {
-            $query->where('pro_um_compra', $unidad);
-        }
+    public function getPuedeEditarAttribute(): bool
+    {
+        return $this->estado_prod === 'ACT';
+    }
 
-        $orden = ($orden !== null && $orden !== '') ? $orden : 'id_asc';
+    public function getPuedeEliminarAttribute(): bool
+    {
+        return $this->estado_prod === 'ACT';
+    }
 
-        switch ($orden) {
-            case 'id_asc':
-                $query->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC");
-                break;
+    /* =========================
+       QUERIES
+    ========================= */
 
-            case 'id_desc':
-                $query->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) DESC");
-                break;
-
-            case 'desc_az':
-                $query->orderBy('pro_nombre', 'ASC');
-                break;
-
-            case 'desc_za':
-                $query->orderBy('pro_nombre', 'DESC');
-                break;
-
-            default:
-                return null;
-        }
-
-        return $query->paginate($perPage);
+    public static function buscarPorId(string $id): ?self
+    {
+        return self::where('id_producto', $id)->first();
     }
 
     public static function existeNombre(string $nombre): bool
     {
-        return self::whereRaw('LOWER(pro_nombre) = ?', [mb_strtolower(trim($nombre))])->exists();
+        return self::whereRaw('LOWER(pro_nombre) = ?', [mb_strtolower($nombre)])
+            ->exists();
     }
 
-    public static function existeId(string $id): bool
+    public static function obtenerParaLista(int $perPage)
     {
-        return self::where('id_producto', $id)->exists();
+        return self::with(['categoria', 'unidad'])
+            ->orderBy('id_producto', 'ASC')
+            ->paginate($perPage);
     }
+
+    public static function paginarActivosConFiltros($orden, $categoria, $unidad, int $perPage)
+    {
+        $q = self::with(['categoria', 'unidad'])
+            ->where('estado_prod', 'ACT');
+
+        if ($categoria) {
+            $q->where('id_categoria', $categoria);
+        }
+
+        if ($unidad) {
+            $q->where('unidad_medida', $unidad);
+        }
+
+        if ($orden) {
+            match ($orden) {
+                'precio_asc'  => $q->orderBy('pro_precio_venta', 'ASC'),
+                'precio_desc' => $q->orderBy('pro_precio_venta', 'DESC'),
+                'nombre_asc'  => $q->orderBy('pro_nombre', 'ASC'),
+                'nombre_desc' => $q->orderBy('pro_nombre', 'DESC'),
+                default       => null,
+            };
+        }
+
+        return $q->paginate($perPage);
+    }
+
+    /* =========================
+       TRANSACCIONES
+    ========================= */
 
     public static function generarSiguienteId(): string
     {
-        $base = 1000;
+        $ultimo = self::orderBy('id_producto', 'DESC')->first();
 
-        $max = (int) self::query()
-            ->where('id_producto', 'like', 'P%')
-            ->selectRaw("COALESCE(MAX(CAST(SUBSTRING(id_producto FROM 2) AS INTEGER)), 0) AS max_id")
-            ->value('max_id');
-
-        if ($max < ($base - 1)) {
-            return 'P' . $base;
+        if (!$ultimo) {
+            return 'P001';
         }
 
-        return 'P' . ($max + 1);
+        $num = (int) substr($ultimo->id_producto, 1) + 1;
+        return 'P' . str_pad((string) $num, 3, '0', STR_PAD_LEFT);
     }
 
-    public static function crearProducto(array $data)
+    public static function crearProductoTx(array $data): void
     {
-        $idProducto = $data['id_producto'] ?? self::generarSiguienteId();
-
-        return self::create([
-            'id_producto'       => $idProducto,
-
-            'pro_nombre'        => $data['pro_nombre'],
-            'pro_descripcion'   => $data['pro_descripcion'] ?? null,
-
-            'pro_um_compra'     => $data['unidad_medida'],
-            'pro_um_venta'      => $data['unidad_medida'],
-            'pro_valor_compra'  => $data['pro_valor_compra'] ?? 0,
-            'pro_precio_venta'  => $data['pro_precio_venta'],
-
-            'pro_precio_antes'  => $data['pro_precio_antes'] ?? null,
-            'pro_etiqueta'      => $data['pro_etiqueta'] ?? null,
-            'pro_es_destacado'  => (bool) ($data['pro_es_destacado'] ?? false),
-            'pro_clicks_count'  => (int) ($data['pro_clicks_count'] ?? 0),
-
-            'pro_saldo_inicial' => $data['pro_saldo_inicial'],
-            'pro_qty_ingresos'  => 0,
-            'pro_qty_egresos'   => 0,
-            'pro_qty_ajustes'   => 0,
-            'pro_saldo_final'   => $data['pro_saldo_inicial'],
-
-            'estado_prod'       => 'ACT',
-            'id_categoria'      => $data['id_categoria'] ?? null,
-            'pro_imagen'        => $data['pro_imagen'] ?? null,
-        ]);
+        DB::transaction(function () use ($data) {
+            self::create($data);
+        });
     }
 
-    public function actualizarProducto(array $data)
+    public function actualizarProductoTx(array $data): void
     {
-        return $this->update([
-            'pro_descripcion'   => array_key_exists('pro_descripcion', $data)
-                ? ($data['pro_descripcion'] !== '' ? $data['pro_descripcion'] : null)
-                : $this->pro_descripcion,
-
-            'pro_valor_compra'  => $data['pro_valor_compra'] ?? $this->pro_valor_compra,
-            'pro_precio_venta'  => $data['pro_precio_venta'],
-
-            'pro_precio_antes'  => array_key_exists('pro_precio_antes', $data)
-                ? ($data['pro_precio_antes'] === '' ? null : $data['pro_precio_antes'])
-                : $this->pro_precio_antes,
-
-            // ✅ CLAVE: permitir limpiar etiqueta (guardar NULL)
-            'pro_etiqueta'      => array_key_exists('pro_etiqueta', $data)
-                ? ($data['pro_etiqueta'] === '' ? null : $data['pro_etiqueta'])
-                : $this->pro_etiqueta,
-
-            'pro_es_destacado'  => (bool) ($data['pro_es_destacado'] ?? false),
-
-            'pro_saldo_inicial' => (int) $data['pro_saldo_inicial'],
-            'pro_qty_ingresos'  => (int) $data['pro_qty_ingresos'],
-            'pro_qty_egresos'   => (int) $data['pro_qty_egresos'],
-            'pro_qty_ajustes'   => (int) $data['pro_qty_ajustes'],
-            'pro_saldo_final'   => (int) $data['pro_saldo_final'],
-
-            'id_categoria'      => $data['id_categoria'] ?? $this->id_categoria,
-            'pro_imagen'        => $data['pro_imagen'] ?? $this->pro_imagen,
-        ]);
+        DB::transaction(function () use ($data) {
+            $this->update($data);
+        });
     }
 
-    public function inactivarProducto()
+    public function inactivarProductoTx(): void
     {
-        return $this->update(['estado_prod' => 'INA']);
+        DB::transaction(function () {
+            $this->update(['estado_prod' => 'INA']);
+        });
     }
-
-    public static function crearProductoTx(array $data)
-    {
-        try {
-            DB::beginTransaction();
-            self::crearProducto($data);
-            DB::commit();
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
-    public function actualizarProductoTx(array $data)
-    {
-        try {
-            DB::beginTransaction();
-            $this->actualizarProducto($data);
-            DB::commit();
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
-    public function inactivarProductoTx()
-    {
-        try {
-            DB::beginTransaction();
-            $this->inactivarProducto();
-            DB::commit();
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-    public static function obtenerValoresCompraPorIds(array $ids): array
-    {
-        if (empty($ids)) {
-            return [];
-        }
-
-        // Normalizar IDs (por seguridad)
-        $ids = array_map(fn($v) => trim((string)$v), $ids);
-
-        $rows = self::query()
-            ->selectRaw('TRIM(id_producto) as id_producto, pro_valor_compra')
-            ->whereIn(DB::raw('TRIM(id_producto)'), $ids)
-            ->where('estado_prod', 'ACT')
-            ->get()
-            ->keyBy('id_producto');
-
-        $valores = [];
-
-        foreach ($ids as $id) {
-            if (!isset($rows[$id])) {
-                throw new \Exception("Producto no encontrado o inactivo: {$id}");
-            }
-
-            $valor = $rows[$id]->pro_valor_compra;
-
-            if ($valor === null) {
-                throw new \Exception("Producto {$id} no tiene valor de compra");
-            }
-
-            $valores[] = (float) $valor;
-        }
-
-        return $valores;
-    }
-
-
-
 }

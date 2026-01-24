@@ -6,16 +6,10 @@
 
     <title>@yield('titulo', 'MarketCuy')</title>
 
-    {{-- Bootstrap (unificado) --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    {{-- FontAwesome (por si algún módulo lo usa) --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-
-    {{-- CSS Global (navbar, colores, utilidades compartidas) --}}
     <link rel="stylesheet" href="{{ asset('css/global.css') }}">
 
-    {{-- CSS específico de cada módulo --}}
     @stack('styles')
 </head>
 
@@ -92,38 +86,20 @@
         @endif
     @endif
 
-    {{-- Compatibilidad con mensajes VIEJOS (por si algún módulo aún usa ok/warning/error) --}}
-    @if(session('ok'))
-        <div class="alert alert-success">{{ session('ok') }}</div>
-    @endif
-    @if(session('warning'))
-        <div class="alert alert-warning">{{ session('warning') }}</div>
-    @endif
-
-    {{-- MENSAJE FRONTEND FACTURAS (stock) --}}
     <div id="alerta-stock"
          class="alert alert-warning py-2 border-0 shadow-sm small fw-bold mb-3"
          style="display:none;">
         {{ config('mensajes.M36') }}
     </div>
 
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
     @yield('contenido')
-
     @yield('content')
 
 </main>
 
-{{-- Bootstrap JS --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-{{-- JavaScript Global --}}
 <script src="{{ asset('js/global.js') }}"></script>
 
-{{-- JS específico de cada módulo --}}
 @stack('scripts')
 
 </body>
