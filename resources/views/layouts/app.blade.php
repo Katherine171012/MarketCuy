@@ -12,91 +12,11 @@
     {{-- FontAwesome (por si algún módulo lo usa) --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <style>
-        body { background-color: #f8f9fa; }
-        /* ===== PALETA CONCHO ===== */
-        .bg-dark { background-color: #660404 !important; }
-        .bg-concho { background-color: #660404 !important; }
-        /* Botón concho (por si lo usan en blades) */
-        .btn-concho{
-            background-color: #660404 !important;
-            color: #fff !important;
-            border: none !important;
-        }
-        .btn-concho:hover{
-            background-color: #4d0303 !important;
-            color: #fff !important;
-        }
+    {{-- CSS Global (navbar, colores, utilidades compartidas) --}}
+    <link rel="stylesheet" href="{{ asset('css/global.css') }}">
 
-        /* Tabla header concho (por si usan table-custom) */
-        .table-custom thead th{
-            background-color: #660404 !important;
-            color: #fff !important;
-            border: none !important;
-            padding: 15px !important;
-        }
-
-        /* ===== Tus estilos bootstrap custom ===== */
-        .table-dark {
-            --bs-table-bg: #660404;
-            --bs-table-color: #fff;
-            --bs-table-border-color: rgba(255,255,255,.25);
-        }
-
-        .btn-outline-dark{
-            --bs-btn-color: #660404;
-            --bs-btn-border-color: #660404;
-            --bs-btn-hover-color: #fff;
-            --bs-btn-hover-bg: #660404;
-            --bs-btn-hover-border-color: #660404;
-            --bs-btn-active-bg: #660404;
-            --bs-btn-active-border-color: #660404;
-        }
-
-        .btn-primary{
-            --bs-btn-bg: #660404;
-            --bs-btn-border-color: #660404;
-            --bs-btn-hover-bg: #520303;
-            --bs-btn-hover-border-color: #520303;
-            --bs-btn-active-bg: #520303;
-            --bs-btn-active-border-color: #520303;
-        }
-
-        /* SVG en nav (por si algún módulo lo trae) */
-        nav svg { max-width: 20px; }
-
-        /* ===== CLIENTES: ocultar navbar interno duplicado (si existe en su blade) ===== */
-        body.mod-clientes main nav.navbar{
-            display: none !important;
-        }
-
-        /* ===== ACCIONES EN TABLA: asegurar colores correctos (clientes/productos) ===== */
-        body.mod-clientes main table .btn.btn-warning,
-        body.mod-productos main table .btn.btn-warning{
-            background-color: #ffc107 !important;
-            border-color: #ffc107 !important;
-            color: #000 !important;
-        }
-        body.mod-clientes main table .btn.btn-warning:hover,
-        body.mod-productos main table .btn.btn-warning:hover{
-            background-color: #e0a800 !important;
-            border-color: #e0a800 !important;
-            color: #000 !important;
-        }
-
-        body.mod-clientes main table .btn.btn-danger,
-        body.mod-productos main table .btn.btn-danger{
-            background-color: #dc3545 !important;
-            border-color: #dc3545 !important;
-            color: #fff !important;
-        }
-        body.mod-clientes main table .btn.btn-danger:hover,
-        body.mod-productos main table .btn.btn-danger:hover{
-            background-color: #bb2d3b !important;
-            border-color: #bb2d3b !important;
-            color: #fff !important;
-        }
-    </style>
+    {{-- CSS específico de cada módulo --}}
+    @stack('styles')
 </head>
 
 @php
@@ -105,9 +25,8 @@
     $esClientes     = ($p === 'clientes' || str_starts_with($p, 'clientes/'));
     $esProductos    = ($p === 'productos' || str_starts_with($p, 'productos/'));
     $esProveedores  = ($p === 'proveedores' || str_starts_with($p, 'proveedores/'));
-    $esFacturas = ($p === 'facturas' || str_starts_with($p, 'facturas/'));
+    $esFacturas     = ($p === 'facturas' || str_starts_with($p, 'facturas/'));
     $esCompras      = ($p === 'compras' || str_starts_with($p, 'compras/'));
-
 
     $clasesBody = [];
     if ($esClientes) $clasesBody[] = 'mod-clientes';
@@ -115,7 +34,6 @@
     if ($esProveedores) $clasesBody[] = 'mod-proveedores';
     if ($esFacturas) $clasesBody[] = 'mod-facturas';
     if ($esCompras) $clasesBody[] = 'mod-compras';
-
 
     $homeUrl = '/';
     try {
@@ -155,7 +73,6 @@
                     <li class="nav-item"><span class="nav-link active fw-semibold">Compras</span></li>
                 @endif
             </ul>
-
         </div>
     </div>
 </nav>
@@ -190,7 +107,7 @@
         {{ config('mensajes.M36') }}
     </div>
 
-@if(session('error'))
+    @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
@@ -200,6 +117,14 @@
 
 </main>
 
+{{-- Bootstrap JS --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{{-- JavaScript Global --}}
+<script src="{{ asset('js/global.js') }}"></script>
+
+{{-- JS específico de cada módulo --}}
+@stack('scripts')
+
 </body>
 </html>
