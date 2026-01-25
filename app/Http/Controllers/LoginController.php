@@ -29,7 +29,6 @@ class LoginController extends Controller
         $password = (string) $request->input('password');
 
         try {
-            // Setea credenciales dinámicas para probar el ROLE
             config([
                 'database.connections.pgsql.host'     => env('DB_HOST'),
                 'database.connections.pgsql.port'     => env('DB_PORT', 5432),

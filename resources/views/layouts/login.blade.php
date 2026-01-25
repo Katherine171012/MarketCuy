@@ -25,7 +25,7 @@
                 @csrf
 
                 <div class="mb-3">
-                    <label class="form-label login-label">Usuario (ROLE)</label>
+                    <label class="form-label login-label">Usuario</label>
                     <input type="text"
                            name="username"
                            class="form-control login-input"
