@@ -15,7 +15,7 @@
 
 @php
     $p = trim(request()->path(), '/');
-
+    $esLogin        = ($p === 'login' || str_starts_with($p, 'login/'));
     $esClientes     = ($p === 'clientes' || str_starts_with($p, 'clientes/'));
     $esProductos    = ($p === 'productos' || str_starts_with($p, 'productos/'));
     $esProveedores  = ($p === 'proveedores' || str_starts_with($p, 'proveedores/'));
@@ -23,6 +23,7 @@
     $esCompras      = ($p === 'compras' || str_starts_with($p, 'compras/'));
 
     $clasesBody = [];
+    if ($esLogin) $clasesBody[] = 'mod-login';
     if ($esClientes) $clasesBody[] = 'mod-clientes';
     if ($esProductos) $clasesBody[] = 'mod-productos';
     if ($esProveedores) $clasesBody[] = 'mod-proveedores';

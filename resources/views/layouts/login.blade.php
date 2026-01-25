@@ -3,55 +3,52 @@
 @section('titulo', 'Login - MarketCuy')
 
 @section('contenido')
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-6 col-lg-5">
-            <div class="card shadow border-0">
-                <div class="card-header fw-semibold text-white" style="background:#660404;">
-                    Iniciar sesión
-                </div>
+    <div class="card shadow border-0 login-card">
+        <div class="login-head">
+            <h4 class="title">Iniciar sesión</h4>
+        </div>
 
-                <div class="card-body p-4">
+        <div class="login-body">
 
-                    @if($errors->any())
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                @foreach($errors->all() as $e)
-                                    <li>{{ $e }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
-                    <form method="POST" action="{{ route('login.auth') }}">
-                        @csrf
-
-                        <div class="mb-3">
-                            <label class="form-label">Usuario (ROLE)</label>
-                            <input type="text"
-                                   name="username"
-                                   class="form-control"
-                                   value="{{ old('username') }}"
-                                   required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Contraseña</label>
-                            <input type="password"
-                                   name="password"
-                                   class="form-control"
-                                   required>
-                        </div>
-
-                        <button type="submit" class="btn btn-concho w-100">
-                            Entrar
-                        </button>
-                    </form>
-
-                    <div class="mt-3 small text-muted">
-                        Este acceso valida directamente contra los roles de la base de datos centralizada.
-                    </div>
-                </div>
+            <div class="login-welcome">
+                <h5>Bienvenido a MarketCuy</h5>
+                <p>Para ingresar al sistema, primero debe iniciar sesión.</p>
             </div>
+
+            @if($errors->any())
+                <div class="alert alert-danger login-error mb-3">
+                    {{ $errors->first() }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('login.auth') }}">
+                @csrf
+
+                <div class="mb-3">
+                    <label class="form-label login-label">Usuario (ROLE)</label>
+                    <input type="text"
+                           name="username"
+                           class="form-control login-input"
+                           value="{{ old('username') }}"
+                           placeholder="Ej: Jose"
+                           autocomplete="username"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label login-label">Contraseña</label>
+                    <input type="password"
+                           name="password"
+                           class="form-control login-input"
+                           placeholder="••••••••"
+                           autocomplete="current-password"
+                           required>
+                </div>
+
+                <button type="submit" class="btn btn-concho w-100 login-btn">
+                    Entrar
+                </button>
+            </form>
         </div>
     </div>
 @endsection

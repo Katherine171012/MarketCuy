@@ -55,7 +55,7 @@ class LoginController extends Controller
             session()->forget(['db_user', 'db_pass']);
 
             return back()
-                ->withErrors(['login' => 'ERROR REAL: ' . $e->getMessage()])
+                ->withErrors(['login' => 'Usuario o contraseña incorrectos.'])
                 ->withInput();
         }
     }
