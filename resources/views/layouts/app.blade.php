@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>@yield('titulo', 'MarketCuy')</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/global.css') }}">
 
     @stack('styles')
 </head>
+
 
 @php
     $p = trim(request()->path(), '/');
@@ -54,7 +54,8 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navMain">
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+
                 @if($esClientes)
                     <li class="nav-item"><span class="nav-link active fw-semibold">Clientes</span></li>
                 @elseif($esProductos)
@@ -66,6 +67,18 @@
                 @elseif($esCompras)
                     <li class="nav-item"><span class="nav-link active fw-semibold">Compras</span></li>
                 @endif
+
+                @if(session()->has('db_user'))
+                    <li class="nav-item">
+                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-light btn-sm">
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
+                @endif
+
             </ul>
         </div>
     </div>
