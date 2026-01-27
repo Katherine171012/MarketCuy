@@ -60,7 +60,10 @@
                                            style="border:none; font-size: 0.75rem;">Eliminar</a>
                                     </div>
                                 @else
-                                    <span class="text-muted small">No disponible</span>
+                                    <a href="{{ route('clientes.detalle', $cliente) }}"
+                                       class="text-muted small fw-bold text-decoration-none">
+                                        <i class="fas fa-eye me-1"></i> Visualizar
+                                    </a>
                                 @endif
                             </td>
                         </tr>

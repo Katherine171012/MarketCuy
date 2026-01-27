@@ -38,7 +38,7 @@ class ClienteController extends Controller
 
     public function store(Request $request)
     {
-        //VALIDACIONES DE IDENTIFICACIÓN
+
         if (!$request->filled('cli_ruc_ced')) {
             return back()->with('codigo_mensaje', 'M6')->withInput();
         }
@@ -52,7 +52,6 @@ class ClienteController extends Controller
             return back()->with('codigo_mensaje', 'M7')->withInput();
         }
 
-        // VALIDACIÓN DE DUPLICADOS
         try {
             $dup = Cliente::consultarPorParametro('cli_ruc_ced', $request->cli_ruc_ced);
             if ($dup->isNotEmpty()) {
@@ -62,12 +61,23 @@ class ClienteController extends Controller
             return back()->with('codigo_mensaje', 'E1');
         }
 
-        // 3. VALIDACIÓN DE CAMPOS OBLIGATORIOS
         if (!$request->filled('cli_nombre') ||
             !$request->filled('id_ciudad') ||
             !$request->filled('cli_celular') ||
             !$request->filled('cli_mail')) {
             return back()->with('codigo_mensaje', 'M11')->withInput();
+        }
+
+       if (!preg_match("/^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$/", $request->cli_nombre)) {
+            return back()->with('codigo_mensaje', 'M11')->withInput();
+        }
+
+         if (!is_numeric($request->cli_celular)) {
+            return back()->with('codigo_mensaje', 'M8')->withInput();
+        }
+
+        if (strlen($request->cli_celular) !== 10) {
+            return back()->with('codigo_mensaje', 'M7')->withInput();
         }
 
         if ($request->filled('cli_mail') && !filter_var($request->cli_mail, FILTER_VALIDATE_EMAIL)) {
@@ -90,7 +100,7 @@ class ClienteController extends Controller
 
         } catch (\Illuminate\Database\QueryException $e) {
             DB::rollBack();
-            return back()->with('codigo_mensaje', 'E3')->withInput();
+             return back()->with('codigo_mensaje', 'E3')->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('codigo_mensaje', 'E12')->withInput();
@@ -99,8 +109,7 @@ class ClienteController extends Controller
 
     public function edit(Cliente $cliente)
     {
-        // Tu validación obligatoria
-        if ($cliente->estado_cli !== 'ACT') {
+         if ($cliente->estado_cli !== 'ACT') {
             return redirect()->route('clientes.index')->with('codigo_mensaje', 'M60');
         }
 
@@ -118,20 +127,29 @@ class ClienteController extends Controller
 
     public function update(Request $request, Cliente $cliente)
     {
-        // Validación de campos obligatorios
+        // Validaciones
         if (!$request->filled('cli_nombre') || !$request->filled('id_ciudad') ||
             !$request->filled('cli_celular') || !$request->filled('cli_mail')) {
             return back()->with('codigo_mensaje', 'M11')->withInput();
         }
 
-        // Validación de formato de correo
-        if (!filter_var($request->cli_mail, FILTER_VALIDATE_EMAIL)) {
+        if (!preg_match("/^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+$/", $request->cli_nombre)) {
+            return back()->with('codigo_mensaje', 'M12')->withInput();
+        }
+
+        if (!is_numeric($request->cli_celular)) {
+            return back()->with('codigo_mensaje', 'M20')->withInput();
+        }
+        if (strlen($request->cli_celular) !== 10) {
+            return back()->with('codigo_mensaje', 'M19')->withInput();
+        }
+
+         if (!filter_var($request->cli_mail, FILTER_VALIDATE_EMAIL)) {
             return back()->with('codigo_mensaje', 'M23')->withInput();
         }
 
         DB::beginTransaction();
         try {
-            // Actualización excluyendo campos no editables (Regla F6.2)
             $datos = $request->except('cli_ruc_ced', 'id_cliente');
             $datos['id_ciudad'] = trim($request->id_ciudad);
 

@@ -13,17 +13,6 @@
     <div class="container">
         <h2 class="fw-bold mb-4" style="color: #333;">Ingresar Nuevo Cliente</h2>
 
-        @if(session('codigo_mensaje'))
-            @php
-                $codigo = session('codigo_mensaje');
-                $claseAlerta = str_starts_with($codigo, 'E') ? 'alert-danger' : 'alert-warning';
-            @endphp
-            <div class="alert {{ $claseAlerta }} border-0 shadow-sm fw-bold mb-4 py-3">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                {{ config("mensajes.$codigo") ?? "Código: $codigo" }}
-            </div>
-        @endif
-
         <div class="card border-0 shadow-sm rounded-3">
             <div class="card-header bg-white py-3 border-bottom">
                 <h6 class="m-0 fw-bold text-concho text-uppercase small">Datos del Cliente </h6>

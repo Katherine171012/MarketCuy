@@ -36,12 +36,6 @@
         @if(isset($busquedaActiva))
             @include('clientes.buscar')
         @endif
-        @if(session('codigo_mensaje'))
-            <div class="alert alert-success py-2 border-0 shadow-sm small fw-bold mb-3">
-                <i class="fas fa-check-circle me-2"></i>
-                {{ config("mensajes." . session('codigo_mensaje')) }}
-            </div>
-        @endif
 
         @if(isset($clienteDetalle))
             <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden"
@@ -165,10 +159,7 @@
                 </table>
             </div>
         </div>
-        <br>
-        @if(isset($clienteDelete))
-            @include('clientes.eliminar', ['cliente' => $clienteDelete])
-        @endif
+
         <form method="GET" action="{{ route('clientes.index') }}" class="d-flex align-items-center gap-2">
             <label class="small text-muted">Mostrar</label>
 

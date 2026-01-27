@@ -12,7 +12,7 @@ return [
     'M9'  => 'La cédula o RUC ingresada no es válida.',
     'M10' => 'Ya existe un registro con la misma cédula o RUC.',
     'M11' => 'Existen campos obligatorios sin completar. Verifique e intente nuevamente.',
-    'M12' => 'El RUC ingresado está incompleto.',
+    'M12' => 'El Nombre debe contener unicamente letras.',
     'M13' => 'El RUC debe contener únicamente números.',
     'M14' => 'El RUC ingresado no es válido.',
     'M15' => 'Ya existe un registro con el mismo RUC.',
