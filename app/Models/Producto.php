@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\UnidadMedida;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use App\Models\UnidadMedida;
+use App\Models\Categoria;
 
 class Producto extends Model
 {
@@ -59,9 +61,15 @@ class Producto extends Model
         );
     }
 
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class, 'id_categoria', 'id_categoria');
+    }
+
     public static function obtenerActivos()
     {
         return self::where('estado_prod', 'ACT')
+            ->with(['categoria', 'unidadCompra', 'unidadVenta'])
             ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
             ->get();
     }
@@ -74,6 +82,7 @@ class Producto extends Model
     public static function obtenerParaLista(int $porPagina = 10)
     {
         return self::query()
+            ->with(['categoria', 'unidadCompra', 'unidadVenta'])
             ->orderByRaw("CASE
                 WHEN estado_prod = 'ACT' THEN 1
                 WHEN estado_prod = 'INA' THEN 2
@@ -85,14 +94,16 @@ class Producto extends Model
     public static function paginarActivos(int $perPage = 10)
     {
         return self::queryActivos()
+            ->with(['categoria', 'unidadCompra', 'unidadVenta'])
             ->orderByRaw("CAST(SUBSTRING(id_producto FROM 2) AS INTEGER) ASC")
             ->paginate($perPage);
     }
 
     public static function buscarPorId(?string $id): ?self
     {
-        if (!$id)
+        if (!$id) {
             return null;
+        }
         return self::find($id);
     }
 
@@ -102,7 +113,8 @@ class Producto extends Model
         ?string $unidad,
         int $perPage = 10
     ) {
-        $query = self::queryActivos();
+        $query = self::queryActivos()
+            ->with(['categoria', 'unidadCompra', 'unidadVenta']);
 
         if ($categoria !== null && $categoria !== '') {
             $query->where('id_categoria', (int) $categoria);
@@ -168,14 +180,16 @@ class Producto extends Model
     {
         $idProducto = $data['id_producto'] ?? self::generarSiguienteId();
 
+        $um = $data['unidad_medida'] ?? $data['pro_um_compra'] ?? $data['pro_um_venta'] ?? null;
+
         return self::create([
             'id_producto' => $idProducto,
 
             'pro_nombre' => $data['pro_nombre'],
             'pro_descripcion' => $data['pro_descripcion'] ?? null,
 
-            'pro_um_compra' => $data['unidad_medida'],
-            'pro_um_venta' => $data['unidad_medida'],
+            'pro_um_compra' => $um,
+            'pro_um_venta' => $um,
             'pro_valor_compra' => $data['pro_valor_compra'] ?? 0,
             'pro_precio_venta' => $data['pro_precio_venta'],
 
@@ -202,7 +216,8 @@ class Producto extends Model
             'pro_descripcion' => array_key_exists('pro_descripcion', $data)
                 ? ($data['pro_descripcion'] !== '' ? $data['pro_descripcion'] : null)
                 : $this->pro_descripcion,
-
+            'pro_um_venta' => $data['pro_um_venta'] ?? $this->pro_um_venta,
+            'pro_um_compra' => $data['pro_um_compra'] ?? $this->pro_um_compra,
             'pro_valor_compra' => $data['pro_valor_compra'] ?? $this->pro_valor_compra,
             'pro_precio_venta' => $data['pro_precio_venta'],
 
@@ -210,18 +225,17 @@ class Producto extends Model
                 ? ($data['pro_precio_antes'] === '' ? null : $data['pro_precio_antes'])
                 : $this->pro_precio_antes,
 
-            // ✅ CLAVE: permitir limpiar etiqueta (guardar NULL)
             'pro_etiqueta' => array_key_exists('pro_etiqueta', $data)
                 ? ($data['pro_etiqueta'] === '' ? null : $data['pro_etiqueta'])
                 : $this->pro_etiqueta,
 
             'pro_es_destacado' => (bool) ($data['pro_es_destacado'] ?? false),
 
-            'pro_saldo_inicial' => (int) $data['pro_saldo_inicial'],
-            'pro_qty_ingresos' => (int) $data['pro_qty_ingresos'],
-            'pro_qty_egresos' => (int) $data['pro_qty_egresos'],
-            'pro_qty_ajustes' => (int) $data['pro_qty_ajustes'],
-            'pro_saldo_final' => (int) $data['pro_saldo_final'],
+            'pro_saldo_inicial' => (int) ($data['pro_saldo_inicial'] ?? $this->pro_saldo_inicial),
+            'pro_qty_ingresos' => (int) ($data['pro_qty_ingresos'] ?? $this->pro_qty_ingresos),
+            'pro_qty_egresos' => (int) ($data['pro_qty_egresos'] ?? $this->pro_qty_egresos),
+            'pro_qty_ajustes' => (int) ($data['pro_qty_ajustes'] ?? $this->pro_qty_ajustes),
+            'pro_saldo_final' => (int) ($data['pro_saldo_final'] ?? $this->pro_saldo_final),
 
             'id_categoria' => $data['id_categoria'] ?? $this->id_categoria,
             'pro_imagen' => $data['pro_imagen'] ?? $this->pro_imagen,
@@ -271,13 +285,13 @@ class Producto extends Model
             throw $e;
         }
     }
+
     public static function obtenerValoresCompraPorIds(array $ids): array
     {
         if (empty($ids)) {
             return [];
         }
 
-        // Normalizar IDs (por seguridad)
         $ids = array_map(fn($v) => trim((string) $v), $ids);
 
         $rows = self::query()
@@ -306,25 +320,66 @@ class Producto extends Model
         return $valores;
     }
 
-
-
-    // ==========================================
-    // Métodos helper para limpiar lógica de vistas
-    // ==========================================
-
-    /**
-     * Obtiene el ID del producto limpio (sin espacios)
-     */
     public function getIdLimpio(): string
     {
         return trim((string) $this->id_producto);
     }
 
-    /**
-     * Obtiene el nombre del producto limpio (sin espacios)
-     */
     public function getNombreLimpio(): string
     {
         return trim((string) $this->pro_nombre);
+    }
+
+    public function getEstadoTextoAttribute(): string
+    {
+        return $this->estado_prod === 'ACT' ? 'Activo' : 'Inactivo';
+    }
+
+    public function getEstadoClaseAttribute(): string
+    {
+        return $this->estado_prod === 'ACT' ? 'success' : 'secondary';
+    }
+
+    public function getEtiquetaTextoAttribute(): ?string
+    {
+        return $this->pro_etiqueta ?: null;
+    }
+
+    public function getEsOfertaAttribute(): bool
+    {
+        return mb_strtolower((string) $this->pro_etiqueta) === 'oferta'
+            && $this->pro_precio_antes !== null;
+    }
+
+    public function getCategoriaTextoAttribute(): string
+    {
+        return $this->categoria?->cat_nombre ?? 'Sin categoría';
+    }
+
+    public function getImagenUrlAttribute(): string
+    {
+        if ($this->pro_imagen) {
+            $img = ltrim((string) $this->pro_imagen, '/');
+
+            if (file_exists(public_path('images/' . $img))) {
+                return asset('images/' . $img);
+            }
+
+            if (Storage::disk('public')->exists($img)) {
+                return asset('storage/' . $img);
+            }
+        }
+
+        return asset('img/no-image.png');
+    }
+
+    public function getPuedeEditarAttribute(): bool
+    {
+        return $this->estado_prod === 'ACT';
+    }
+
+    public function getPuedeEliminarAttribute(): bool
+    {
+        return $this->estado_prod === 'ACT';
     }
 }

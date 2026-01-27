@@ -29,6 +29,27 @@ class ProductoController extends Controller
         session()->flash('tipo_mensaje', $tipo);
     }
 
+    /**
+     * ID secuencial desde P200:
+     * - Si no existe ningún Pxxx >= 200, devuelve P200
+     * - Si existe, devuelve P(max+1)
+     */
+    private function generarSiguienteIdDesdeP200(): string
+    {
+        $base = 200;
+
+        $max = (int) Producto::query()
+            ->where('id_producto', 'like', 'P%')
+            ->selectRaw("COALESCE(MAX(CAST(SUBSTRING(id_producto FROM 2) AS INTEGER)), 0) AS max_id")
+            ->value('max_id');
+
+        if ($max < ($base - 1)) {
+            return 'P' . $base;
+        }
+
+        return 'P' . ($max + 1);
+    }
+
     public function index(Request $request)
     {
         $perPage = (int) $request->get('per_page', 10);
@@ -122,21 +143,14 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
+        // (Se mantiene tu regla: precio venta debe ser > 0)
         if ((float)$request->pro_precio_venta <= 0) {
             return back()->withErrors([
                 'pro_precio_venta' => $this->msg('productos.precio.mayor_cero')
             ])->withInput();
         }
 
-        $etiqueta = trim((string) ($request->pro_etiqueta ?? ''));
-        $esOferta = (mb_strtolower($etiqueta) === 'oferta');
-
-        if ($esOferta) {
-            return back()->withErrors([
-                'pro_etiqueta' => $this->msg('productos.oferta.creacion')
-            ])->withInput();
-        }
-
+        // Valor compra no puede ser < 0
         if (
             $request->pro_valor_compra !== null &&
             $request->pro_valor_compra !== '' &&
@@ -147,6 +161,7 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
+        // Stock inicial no puede ser < 0
         if ($request->pro_saldo_inicial === null || $request->pro_saldo_inicial === '' || (int)$request->pro_saldo_inicial < 0) {
             return back()->withErrors([
                 'pro_saldo_inicial' => $this->msg('M35')
@@ -164,7 +179,8 @@ class ProductoController extends Controller
         }
 
         try {
-            $nuevoId = Producto::generarSiguienteId();
+            // ✅ ID desde P200
+            $nuevoId = $this->generarSiguienteIdDesdeP200();
             $saldoInicial = (int) $request->pro_saldo_inicial;
 
             $data = [
@@ -176,8 +192,13 @@ class ProductoController extends Controller
                 'pro_precio_venta'  => $request->pro_precio_venta,
                 'pro_precio_antes'  => null,
                 'id_categoria'      => $request->id_categoria ?: null,
-                'pro_etiqueta'      => $etiqueta !== '' ? $etiqueta : null,
-                'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
+
+                // ✅ Etiqueta SIEMPRE NULL al crear
+                'pro_etiqueta'      => null,
+
+                // ✅ Sin destacado (no existe checkbox ya)
+                'pro_es_destacado'  => false,
+
                 'pro_clicks_count'  => 0,
 
                 'pro_saldo_inicial' => $saldoInicial,
@@ -198,6 +219,7 @@ class ProductoController extends Controller
                 $data['pro_imagen'] = null;
             }
 
+            // ✅ Aquí se guarda en BDD (transacción)
             Producto::crearProductoTx($data);
 
             $this->flash('productos.crear.ok', 'success');
@@ -260,7 +282,11 @@ class ProductoController extends Controller
                 'pro_precio_venta' => $this->msg('productos.oferta.descuento')
             ])->withInput();
         }
-
+        if (!$request->pro_um_venta || !UnidadMedida::where('id_unidad_medida', $request->pro_um_venta)->exists()) {
+            return back()->withErrors([
+                'pro_um_venta' => $this->msg('productos.unidad.invalida')
+            ])->withInput();
+        }
         if ($request->hasFile('pro_imagen')) {
             $file = $request->file('pro_imagen');
             $ext = strtolower($file->getClientOriginalExtension());
@@ -279,6 +305,8 @@ class ProductoController extends Controller
                 'pro_precio_venta'  => $precioVentaNuevo,
                 'pro_etiqueta'      => $tieneEtiqueta ? $etiqueta : null,
                 'pro_es_destacado'  => $request->has('pro_es_destacado') ? true : false,
+                'pro_um_venta'      => $request->pro_um_venta,
+                'pro_um_compra' => $request->pro_um_venta,
             ];
 
             if ($tieneEtiqueta && $esOferta) {
@@ -373,25 +401,10 @@ class ProductoController extends Controller
             ])->withInput();
         }
 
-        $mapOrden = [
-            'id_asc'   => null,
-            'id_desc'  => null,
-            'desc_az'  => 'nombre_asc',
-            'desc_za'  => 'nombre_desc',
-            'precio_asc'  => 'precio_asc',
-            'precio_desc' => 'precio_desc',
-            'nombre_asc'  => 'nombre_asc',
-            'nombre_desc' => 'nombre_desc',
-        ];
+        $ordenFinal = $orden ?: 'id_asc';
 
-        $ordenFinal = $orden;
-        if ($tieneOrden) {
-            if (!array_key_exists($orden, $mapOrden)) {
-                return back()->withErrors([
-                    'orden' => $this->msg('M58')
-                ])->withInput();
-            }
-            $ordenFinal = $mapOrden[$orden];
+        if (!in_array($ordenFinal, ['id_asc','id_desc','desc_az','desc_za'], true)) {
+            return back()->withErrors(['orden' => $this->msg('M58')])->withInput();
         }
 
         try {
@@ -407,7 +420,7 @@ class ProductoController extends Controller
                 $productos = Producto::with(['categoria', 'unidad'])
                     ->where('estado_prod', 'ACT')
                     ->when($categoria, fn($q) => $q->where('id_categoria', $categoria))
-                    ->when($unidad, fn($q) => $q->where('unidad_medida', $unidad))
+                    ->when($unidad, fn($q) => $q->where('pro_um_compra', $unidad))
                     ->orderBy('id_producto', $dir)
                     ->paginate($perPage);
             }

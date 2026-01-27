@@ -93,13 +93,13 @@
                         <div class="col-md-4"><strong>Stock:</strong> {{ $productoVer->pro_saldo_final }}</div>
 
                         <div class="col-md-4">
-                            <strong>UM:</strong>
-                            {{ $productoVer->unidad_medida ?? '—' }}
+                            <strong>Unidad de medida:</strong>
+                            {{ $productoVer->unidadVenta?->um_descripcion ?? $productoVer->pro_um_venta ?? '—' }}
                         </div>
 
                         <div class="col-md-4">
                             <strong>Etiqueta:</strong>
-                            {{ $productoVer->etiqueta_texto ?? '—' }}
+                            {{ $productoVer->etiqueta_texto ? $productoVer->etiqueta_texto : 'Sin etiqueta' }}
                         </div>
 
                         <div class="col-md-4">

@@ -55,6 +55,7 @@
                     <label class="form-label">Valor compra</label>
                     <input type="number"
                            step="0.01"
+                           min="0"
                            name="pro_valor_compra"
                            class="form-control"
                            value="{{ old('pro_valor_compra', 0) }}">
@@ -64,6 +65,7 @@
                     <label class="form-label">Precio venta</label>
                     <input type="number"
                            step="0.01"
+                           min="0"
                            name="pro_precio_venta"
                            class="form-control"
                            value="{{ old('pro_precio_venta') }}">
@@ -72,19 +74,10 @@
                 <div class="col-md-4">
                     <label class="form-label">Stock inicial</label>
                     <input type="number"
+                           min="0"
                            name="pro_saldo_inicial"
                            class="form-control"
                            value="{{ old('pro_saldo_inicial', 0) }}">
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Etiqueta</label>
-                    <select name="pro_etiqueta" class="form-select">
-                        <option value="" {{ old('pro_etiqueta') === '' ? 'selected' : '' }}>Ninguna</option>
-                        <option value="Oferta" {{ old('pro_etiqueta') === 'Oferta' ? 'selected' : '' }}>Oferta</option>
-                        <option value="Más vendido" {{ old('pro_etiqueta') === 'Más vendido' ? 'selected' : '' }}>Más vendido</option>
-                        <option value="Nuevo" {{ old('pro_etiqueta') === 'Nuevo' ? 'selected' : '' }}>Nuevo</option>
-                    </select>
                 </div>
 
                 <div class="col-md-4">
@@ -92,18 +85,6 @@
                     <input type="file"
                            name="pro_imagen"
                            class="form-control">
-                </div>
-
-                <div class="col-12">
-                    <div class="form-check">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               name="pro_es_destacado"
-                            {{ old('pro_es_destacado') ? 'checked' : '' }}>
-                        <label class="form-check-label">
-                            Destacado
-                        </label>
-                    </div>
                 </div>
 
             </div>
