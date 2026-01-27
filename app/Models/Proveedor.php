@@ -99,15 +99,15 @@ class Proveedor extends Model
             $nuevoId = self::generarNuevoId();
 
             return self::create([
-                'id_proveedor'  => $nuevoId,
-                'prv_nombre'    => $data['prv_nombre'],
-                'prv_ruc_ced'   => $data['prv_ruc_ced'],
-                'id_ciudad'     => $data['id_ciudad'],
-                'prv_mail'      => $data['prv_mail'],
-                'prv_telefono'  => $data['prv_telefono'],
-                'prv_celular'   => $data['prv_celular'] ?? null,
+                'id_proveedor' => $nuevoId,
+                'prv_nombre' => $data['prv_nombre'],
+                'prv_ruc_ced' => $data['prv_ruc_ced'],
+                'id_ciudad' => $data['id_ciudad'],
+                'prv_mail' => $data['prv_mail'],
+                'prv_telefono' => $data['prv_telefono'],
+                'prv_celular' => $data['prv_celular'] ?? null,
                 'prv_direccion' => $data['prv_direccion'] ?? null,
-                'estado_prv'    => 'ACT',
+                'estado_prv' => 'ACT',
                 'fecha_ingreso' => now()->toDateString(),
             ]);
         });
@@ -117,12 +117,12 @@ class Proveedor extends Model
     {
         DB::transaction(function () use ($data) {
             $this->update([
-                'prv_nombre'    => $data['prv_nombre'],
-                'prv_ruc_ced'   => $data['prv_ruc_ced'],
-                'id_ciudad'     => $data['id_ciudad'],
-                'prv_mail'      => $data['prv_mail'],
-                'prv_telefono'  => $data['prv_telefono'],
-                'prv_celular'   => $data['prv_celular'] ?? null,
+                'prv_nombre' => $data['prv_nombre'],
+                'prv_ruc_ced' => $data['prv_ruc_ced'],
+                'id_ciudad' => $data['id_ciudad'],
+                'prv_mail' => $data['prv_mail'],
+                'prv_telefono' => $data['prv_telefono'],
+                'prv_celular' => $data['prv_celular'] ?? null,
                 'prv_direccion' => $data['prv_direccion'] ?? null,
             ]);
         });
@@ -140,6 +140,26 @@ class Proveedor extends Model
             ->orderBy('id_proveedor')
             ->get();
 
+    }
+
+    // ==========================================
+    // Métodos helper para limpiar lógica de vistas
+    // ==========================================
+
+    /**
+     * Obtiene el ID del proveedor limpio (sin espacios)
+     */
+    public function getIdLimpio(): string
+    {
+        return trim((string) $this->id_proveedor);
+    }
+
+    /**
+     * Obtiene el nombre del proveedor limpio (sin espacios)
+     */
+    public function getNombreLimpio(): string
+    {
+        return trim((string) $this->prv_nombre);
     }
 }
 

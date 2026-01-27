@@ -13,10 +13,14 @@ class CompraController extends Controller
     public function index(Request $request)
     {
         $parametro = $request->get('parametro');
-        $valor     = trim((string) $request->get('valor'));
+        $valor = trim((string) $request->get('valor'));
         $orden = $request->get('orden', 'fecha'); // fecha|estado|proveedor
         $ordenes = Compra::buscar($parametro, $valor, $orden);
 
+        // Determinar si la búsqueda está activa (movido desde la vista)
+        $busquedaActiva = $request->filled('parametro')
+            || $request->filled('valor')
+            || $request->filled('orden');
 
         // Modal eliminar (misma pantalla): /compras?delete=OC-00001
         $compraDelete = null;
@@ -34,7 +38,12 @@ class CompraController extends Controller
         }
 
         return view('compras.index', compact(
-            'ordenes', 'parametro', 'valor', 'orden', 'compraDelete'
+            'ordenes',
+            'parametro',
+            'valor',
+            'orden',
+            'compraDelete',
+            'busquedaActiva'
         ));
     }
     public function create()
@@ -43,35 +52,43 @@ class CompraController extends Controller
         $productos = Producto::obtenerActivos();
 
         $idCompra = Compra::generarIdSugerido();
+        $fechaHoraActual = now()->format('Y-m-d H:i:s'); // Preparar en controller
 
-        return view('compras.create', compact('proveedores', 'productos', 'idCompra'));
+        return view('compras.create', compact('proveedores', 'productos', 'idCompra', 'fechaHoraActual'));
     }
     public function store(Request $request)
     {
-        // Validación con el formato REAL del blade:
-        // productos[0][id_producto], productos[0][cantidad]
+        // Validación con mensajes en español
         $data = $request->validate([
-            'id_proveedor' => ['required', 'string'], // PRV0002
-            'accion'       => ['nullable', 'in:guardar,aprobar'],
-            'productos'    => ['required', 'array', 'min:1'],
+            'id_proveedor' => ['required', 'string'],
+            'accion' => ['nullable', 'in:guardar,aprobar'],
+            'productos' => ['required', 'array', 'min:1'],
             'productos.*.id_producto' => ['required', 'string'],
-            'productos.*.cantidad'    => ['required', 'integer', 'min:1'],
+            'productos.*.cantidad' => ['required', 'integer', 'min:1'],
+        ], [
+            'id_proveedor.required' => 'Seleccione un proveedor para continuar.',
+            'productos.required' => 'La orden de compra debe contener al menos un producto.',
+            'productos.min' => 'La orden de compra debe contener al menos un producto.',
+            'productos.*.id_producto.required' => 'Seleccione un producto válido.',
+            'productos.*.cantidad.required' => 'Ingrese la cantidad del producto.',
+            'productos.*.cantidad.integer' => 'La cantidad debe ser un número entero.',
+            'productos.*.cantidad.min' => 'La cantidad debe ser al menos 1.',
         ]);
 
         // Armar arrays para la SP
         $idsProductos = [];
-        $cantidades   = [];
+        $cantidades = [];
 
         foreach ($data['productos'] as $item) {
             $idProd = trim($item['id_producto']);
-            $cant   = (int) $item['cantidad'];
+            $cant = (int) $item['cantidad'];
 
             if ($idProd === '') {
                 continue;
             }
 
             $idsProductos[] = $idProd;
-            $cantidades[]   = $cant;
+            $cantidades[] = $cant;
         }
 
         if (count($idsProductos) === 0) {
@@ -139,6 +156,12 @@ class CompraController extends Controller
             ->orderBy('id_producto')
             ->get();
 
+        // Preparar items en el controller en lugar de la vista
+        $items = old('productos') ?? $detalle->map(fn($d) => [
+            'id_producto' => trim($d->id_producto),
+            'cantidad' => (int) $d->pxo_cantidad,
+        ])->toArray();
+
         $proveedores = \App\Models\Proveedor::where('estado_prv', 'ACT')
             ->orderByRaw("CAST(regexp_replace(id_proveedor, '\\D', '', 'g') AS INTEGER) ASC")
             ->get();
@@ -147,17 +170,25 @@ class CompraController extends Controller
             ->orderByRaw("CAST(regexp_replace(id_producto, '\\D', '', 'g') AS INTEGER) ASC")
             ->get();
 
-        return view('compras.edit', compact('compra', 'detalle', 'proveedores', 'productos'));
+        return view('compras.edit', compact('compra', 'items', 'proveedores', 'productos'));
     }
     public function update(Request $request, string $id)
     {
-        // Validación del formato del blade (productos[i][id_producto], productos[i][cantidad])
+        // Validación con mensajes en español
         $data = $request->validate([
             'id_proveedor' => ['required', 'string'],
-            'accion'       => ['nullable', 'in:guardar,aprobar'],
-            'productos'    => ['required', 'array', 'min:1'],
+            'accion' => ['nullable', 'in:guardar,aprobar'],
+            'productos' => ['required', 'array', 'min:1'],
             'productos.*.id_producto' => ['required', 'string'],
-            'productos.*.cantidad'    => ['required', 'integer', 'min:1'],
+            'productos.*.cantidad' => ['required', 'integer', 'min:1'],
+        ], [
+            'id_proveedor.required' => 'Seleccione un proveedor para continuar.',
+            'productos.required' => 'La orden de compra debe contener al menos un producto.',
+            'productos.min' => 'La orden de compra debe contener al menos un producto.',
+            'productos.*.id_producto.required' => 'Seleccione un producto válido.',
+            'productos.*.cantidad.required' => 'Ingrese la cantidad del producto.',
+            'productos.*.cantidad.integer' => 'La cantidad debe ser un número entero.',
+            'productos.*.cantidad.min' => 'La cantidad debe ser al menos 1.',
         ]);
 
         if (empty($data['id_proveedor'])) {
@@ -168,16 +199,17 @@ class CompraController extends Controller
         }
 
         $idsProductos = [];
-        $cantidades   = [];
+        $cantidades = [];
 
         foreach ($data['productos'] as $item) {
             $idProd = trim($item['id_producto']);
-            $cant   = (int) $item['cantidad'];
+            $cant = (int) $item['cantidad'];
 
-            if ($idProd === '') continue;
+            if ($idProd === '')
+                continue;
 
             $idsProductos[] = $idProd;
-            $cantidades[]   = $cant;
+            $cantidades[] = $cant;
         }
 
         if (count($idsProductos) === 0) {
