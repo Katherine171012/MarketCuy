@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="es">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,24 +21,20 @@
 
 @php
     $p = trim(request()->path(), '/');
-
-    $esClientes = ($p === 'clientes' || str_starts_with($p, 'clientes/'));
-    $esProductos = ($p === 'productos' || str_starts_with($p, 'productos/'));
-    $esProveedores = ($p === 'proveedores' || str_starts_with($p, 'proveedores/'));
-    $esFacturas = ($p === 'facturas' || str_starts_with($p, 'facturas/'));
-    $esCompras = ($p === 'compras' || str_starts_with($p, 'compras/'));
+    $esLogin        = ($p === 'login' || str_starts_with($p, 'login/'));
+    $esClientes     = ($p === 'clientes' || str_starts_with($p, 'clientes/'));
+    $esProductos    = ($p === 'productos' || str_starts_with($p, 'productos/'));
+    $esProveedores  = ($p === 'proveedores' || str_starts_with($p, 'proveedores/'));
+    $esFacturas     = ($p === 'facturas' || str_starts_with($p, 'facturas/'));
+    $esCompras      = ($p === 'compras' || str_starts_with($p, 'compras/'));
 
     $clasesBody = [];
-    if ($esClientes)
-        $clasesBody[] = 'mod-clientes';
-    if ($esProductos)
-        $clasesBody[] = 'mod-productos';
-    if ($esProveedores)
-        $clasesBody[] = 'mod-proveedores';
-    if ($esFacturas)
-        $clasesBody[] = 'mod-facturas';
-    if ($esCompras)
-        $clasesBody[] = 'mod-compras';
+    if ($esLogin) $clasesBody[] = 'mod-login';
+    if ($esClientes) $clasesBody[] = 'mod-clientes';
+    if ($esProductos) $clasesBody[] = 'mod-productos';
+    if ($esProveedores) $clasesBody[] = 'mod-proveedores';
+    if ($esFacturas) $clasesBody[] = 'mod-facturas';
+    if ($esCompras) $clasesBody[] = 'mod-compras';
 
     $homeUrl = '/';
     try {
@@ -57,47 +52,65 @@
 
 <body class="bg-light {{ implode(' ', $clasesBody) }}">
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand fw-semibold" href="{{ $homeUrl }}">MarketCuy</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-semibold" href="{{ $homeUrl }}">MarketCuy</a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <div class="collapse navbar-collapse" id="navMain">
-                <ul class="navbar-nav ms-auto">
-                    @if($esClientes)
-                        <li class="nav-item"><span class="nav-link active fw-semibold">Clientes</span></li>
-                    @elseif($esProductos)
-                        <li class="nav-item"><span class="nav-link active fw-semibold">Productos</span></li>
-                    @elseif($esProveedores)
-                        <li class="nav-item"><span class="nav-link active fw-semibold">Proveedores</span></li>
-                    @elseif($esFacturas)
-                        <li class="nav-item"><span class="nav-link active fw-semibold">Facturas</span></li>
-                    @elseif($esCompras)
-                        <li class="nav-item"><span class="nav-link active fw-semibold">Compras</span></li>
-                    @endif
-                </ul>
-            </div>
+        <div class="collapse navbar-collapse" id="navMain">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+
+                @if($esClientes)
+                    <li class="nav-item"><span class="nav-link active fw-semibold">Clientes</span></li>
+                @elseif($esProductos)
+                    <li class="nav-item"><span class="nav-link active fw-semibold">Productos</span></li>
+                @elseif($esProveedores)
+                    <li class="nav-item"><span class="nav-link active fw-semibold">Proveedores</span></li>
+                @elseif($esFacturas)
+                    <li class="nav-item"><span class="nav-link active fw-semibold">Facturas</span></li>
+                @elseif($esCompras)
+                    <li class="nav-item"><span class="nav-link active fw-semibold">Compras</span></li>
+                @endif
+
+                @if(session()->has('db_user'))
+                    <li class="nav-item">
+                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-light btn-sm">
+                                Cerrar sesión
+                            </button>
+                        </form>
+                    </li>
+                @endif
+
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <main class="container py-4">
+<main class="container py-4">
 
-        @if(session('codigo_mensaje'))
-            @php
-                $tipo = session('tipo_mensaje', 'success');
-                $texto = config('mensajes.' . session('codigo_mensaje'));
-            @endphp
+    @if(session('codigo_mensaje'))
+        @php
+            $tipo = session('tipo_mensaje', 'success');
+            $texto = config('mensajes.' . session('codigo_mensaje'));
+        @endphp
 
-            @if($texto)
-                <div class="alert alert-{{ $tipo }} py-2 border-0 shadow-sm small fw-bold mb-3">
-                    {{ $texto }}
-                </div>
-            @endif
+        @if($texto)
+            <div class="alert alert-{{ $tipo }} py-2 border-0 shadow-sm small fw-bold mb-3">
+                {{ $texto }}
+            </div>
         @endif
+    @endif
 
+    <div id="alerta-stock"
+         class="alert alert-warning py-2 border-0 shadow-sm small fw-bold mb-3"
+         style="display:none;">
+        {{ config('mensajes.M36') }}
+    </div>
         {{-- Compatibilidad con mensajes VIEJOS (por si algún módulo aún usa ok/warning/error) --}}
         @if(session('ok'))
             <div class="alert alert-success">{{ session('ok') }}</div>
@@ -122,6 +135,8 @@
             </div>
         @endif
 
+    @yield('contenido')
+    @yield('content')
         @if(session('error'))
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
@@ -130,17 +145,12 @@
 
         @yield('content')
 
-    </main>
+</main>
 
-    {{-- Bootstrap JS --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ asset('js/global.js') }}"></script>
 
-    {{-- JavaScript Global --}}
-    <script src="{{ asset('js/global.js') }}"></script>
-
-    {{-- JS específico de cada módulo --}}
-    @stack('scripts')
+@stack('scripts')
 
 </body>
-
 </html>

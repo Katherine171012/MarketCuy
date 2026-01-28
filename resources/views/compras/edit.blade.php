@@ -16,7 +16,7 @@
         </div>
     @endif
 
-    <form action="{{ route('compras.update', trim($compra->id_compra)) }}"
+    <form action="{{ route('compras.update', $compra->getIdLimpio()) }}"
           method="POST"
           id="formEditarOC">
         @csrf
@@ -34,7 +34,7 @@
                     <div class="col-md-4">
                         <label class="form-label">ID Orden</label>
                         <input class="form-control"
-                               value="{{ trim($compra->id_compra) }}"
+                               value="{{ $compra->getIdLimpio() }}"
                                disabled>
                     </div>
 
@@ -63,13 +63,10 @@
                                 id="selectProveedor"
                                 class="form-select @error('id_proveedor') is-invalid @enderror">
                             <option value="">Seleccione un proveedor</option>
-                            @foreach($proveedores as $prv)
-                                @php
-                                    $idPrv = trim($prv->id_proveedor);
-                                @endphp
-                                <option value="{{ $idPrv }}"
-                                    {{ old('id_proveedor', trim($compra->id_proveedor)) === $idPrv ? 'selected' : '' }}>
-                                    {{ trim($prv->prv_nombre) }}
+                        @foreach($proveedores as $prv)
+                                <option value="{{ $prv->getIdLimpio() }}"
+                                    {{ old('id_proveedor', $compra->getIdProveedorLimpio()) === $prv->getIdLimpio() ? 'selected' : '' }}>
+                                    {{ $prv->getNombreLimpio() }}
                                 </option>
                             @endforeach
                         </select>
@@ -100,13 +97,7 @@
                 </thead>
 
                 <tbody id="contenedor-productos">
-                @php
-                    $items = old('productos') ?? $detalle->map(fn($d) => [
-                        'id_producto' => trim($d->id_producto),
-                        'cantidad'    => (int) $d->pxo_cantidad,
-                    ])->toArray();
-                @endphp
-
+                {{-- $items ya viene preparado del controller --}}
                 @foreach($items as $i => $item)
                     <tr class="producto-item">
                         <td>
@@ -115,10 +106,10 @@
                                     onchange="actualizarPrecio(this)">
                                 <option value="">Seleccione un producto</option>
                                 @foreach($productos as $p)
-                                    <option value="{{ trim($p->id_producto) }}"
+                                    <option value="{{ $p->getIdLimpio() }}"
                                             data-precio="{{ $p->pro_valor_compra ?? 0 }}"
-                                        {{ trim($item['id_producto']) === trim($p->id_producto) ? 'selected' : '' }}>
-                                        {{ trim($p->pro_nombre) }}
+                                        {{ trim($item['id_producto']) === $p->getIdLimpio() ? 'selected' : '' }}>
+                                        {{ $p->getNombreLimpio() }}
                                     </option>
                                 @endforeach
                             </select>
@@ -204,3 +195,122 @@
     </form>
 
 @endsection
+
+@section('scripts')
+    <script>
+        const IVA_PORCENTAJE = {{ (int)($compra->oc_iva ?? 15) }};
+        let indexOC = {{ count($items) }};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar valores de filas existentes
+            document.querySelectorAll('.select-producto').forEach(function(select) {
+                actualizarPrecio(select);
+            });
+        });
+
+        function agregarProducto() {
+            const tbody = document.getElementById('contenedor-productos');
+            const tr = document.createElement('tr');
+            tr.className = 'producto-item';
+
+            tr.innerHTML = `
+                <td>
+                    <select name="productos[${indexOC}][id_producto]"
+                            class="form-select form-select-sm select-producto"
+                            onchange="actualizarPrecio(this)">
+                        <option value="">Seleccione un producto</option>
+                        @foreach($productos as $p)
+            <option value="{{ $p->getIdLimpio() }}"
+                                    data-precio="{{ $p->pro_valor_compra ?? 0 }}">
+                                {{ $p->getNombreLimpio() }}
+            </option>
+@endforeach
+            </select>
+        </td>
+        <td class="text-end"><span class="precio">0.00</span></td>
+        <td>
+            <input type="number"
+                   name="productos[${indexOC}][cantidad]"
+                   class="form-control form-control-sm text-center cantidad"
+                   min="1"
+                   value="1"
+                   onkeydown="return soloFlechasCantidad(event);"
+                   oninput="actualizarSubtotal(this)">
+        </td>
+        <td class="text-end"><strong class="subtotal">0.00</strong></td>
+        <td class="text-center">
+            <button type="button"
+                    class="btn btn-danger btn-sm"
+                    onclick="eliminarProducto(this)">
+                Quitar
+            </button>
+        </td>
+    `;
+            tbody.appendChild(tr);
+            indexOC++;
+        }
+
+        function eliminarProducto(btn) {
+            btn.closest('.producto-item').remove();
+            renumerar();
+            actualizarTotales();
+        }
+
+        function renumerar() {
+            const filas = document.querySelectorAll('.producto-item');
+            filas.forEach((fila, i) => {
+                fila.querySelector('.select-producto').name = `productos[${i}][id_producto]`;
+                fila.querySelector('.cantidad').name = `productos[${i}][cantidad]`;
+            });
+            indexOC = filas.length;
+        }
+
+        function actualizarPrecio(select) {
+            const fila = select.closest('.producto-item');
+            const precioSpan = fila.querySelector('.precio');
+            const option = select.selectedOptions[0];
+            const precio = parseFloat(option?.dataset?.precio || 0);
+
+            precioSpan.textContent = precio.toFixed(2);
+
+            // Actualizar subtotal de esta fila
+            const inputCantidad = fila.querySelector('.cantidad');
+            actualizarSubtotal(inputCantidad);
+        }
+
+        function actualizarSubtotal(input) {
+            const fila = input.closest('.producto-item');
+            const precioText = fila.querySelector('.precio').textContent;
+            const precio = parseFloat(precioText) || 0;
+            const cantidad = parseInt(input.value) || 0;
+
+            const subtotal = precio * cantidad;
+            fila.querySelector('.subtotal').textContent = subtotal.toFixed(2);
+
+            actualizarTotales();
+        }
+
+        function actualizarTotales() {
+            let subtotalGeneral = 0;
+
+            document.querySelectorAll('.subtotal').forEach(el => {
+                subtotalGeneral += parseFloat(el.textContent) || 0;
+            });
+
+            const ivaGeneral = subtotalGeneral * (IVA_PORCENTAJE / 100);
+            const totalGeneral = subtotalGeneral + ivaGeneral;
+
+            document.getElementById('subtotal-general').textContent = subtotalGeneral.toFixed(2);
+            document.getElementById('iva-general').textContent = ivaGeneral.toFixed(2);
+            document.getElementById('total-general').textContent = totalGeneral.toFixed(2);
+        }
+
+        function soloFlechasCantidad(e) {
+            // Permitir flechas, delete, backspace, tab, enter
+            if ([38, 40, 8, 46, 9, 13].includes(e.keyCode)) return true;
+            // Permitir números
+            if ((e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105)) return true;
+            // Bloquear todo lo demás (incluido punto decimal)
+            return false;
+        }
+    </script>

@@ -39,12 +39,16 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Unidad de medida (venta)</label>
-                    @php
-                        $uv = $unidades->firstWhere('id_unidad_medida', $productoEditar->pro_um_venta);
-                        $uvTxt = $uv ? ($uv->id_unidad_medida . ' - ' . ($uv->um_descripcion ?? '')) : $productoEditar->pro_um_venta;
-                    @endphp
-                    <input type="text" class="form-control" value="{{ $uvTxt }}" disabled>
+                    <label class="form-label">Unidad de medida</label>
+
+                    <select name="pro_um_venta" class="form-select">
+                        @foreach($unidades as $u)
+                            <option value="{{ $u->id_unidad_medida }}"
+                                {{ (string)old('pro_um_venta', $productoEditar->pro_um_venta) === (string)$u->id_unidad_medida ? 'selected' : '' }}>
+                                {{ $u->id_unidad_medida }} - {{ $u->um_descripcion }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div class="col-md-4">

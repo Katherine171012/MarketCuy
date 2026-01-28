@@ -101,3 +101,84 @@ body.mod-productos main table .btn.btn-danger:hover {
     border-color: #bb2d3b !important;
     color: #fff !important;
 }
+/* ===== LOGIN (usa tu paleta concho) ===== */
+body.mod-login {
+    background: linear-gradient(180deg, rgba(102,4,4,.08) 0%, rgba(248,249,250,1) 55%) !important;
+}
+
+body.mod-login main.container {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.mod-login .login-card {
+    width: 100%;
+    max-width: 520px;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+body.mod-login .login-head {
+    background: linear-gradient(90deg, #660404 0%, #4d0303 100%);
+    padding: 18px 20px;
+}
+
+body.mod-login .login-head .title {
+    margin: 0;
+    font-weight: 800;
+    color: #fff;
+    font-size: 18px;
+    letter-spacing: .2px;
+}
+
+body.mod-login .login-body {
+    padding: 22px 22px 18px 22px;
+}
+
+body.mod-login .login-welcome {
+    background: #fff6f6;
+    border: 1px solid rgba(102,4,4,.18);
+    border-radius: 14px;
+    padding: 14px 14px;
+    margin-bottom: 16px;
+}
+
+body.mod-login .login-welcome h5 {
+    margin: 0 0 4px 0;
+    font-weight: 800;
+    color: #2c2c2c;
+}
+
+body.mod-login .login-welcome p {
+    margin: 0;
+    color: #6c757d;
+}
+
+body.mod-login .login-label {
+    font-weight: 700;
+    color: #2c2c2c;
+}
+
+body.mod-login .login-input {
+    border-radius: 12px;
+    padding: 11px 12px;
+}
+
+body.mod-login .login-input:focus {
+    border-color: rgba(102,4,4,.45);
+    box-shadow: 0 0 0 .2rem rgba(102,4,4,.15);
+}
+
+body.mod-login .login-btn {
+    border-radius: 12px;
+    padding: 11px 12px;
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+body.mod-login .login-error {
+    border-radius: 12px;
+    border: 1px solid rgba(220,53,69,.35);
+}

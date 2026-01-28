@@ -35,7 +35,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Fecha/Hora</label>
-                        <input class="form-control" value="{{ now() }}" disabled>
+                        <input class="form-control" value="{{ $fechaHoraActual }}" disabled>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Estado</label>
@@ -49,19 +49,18 @@
                             Proveedor <span class="text-danger">*</span>
                         </label>
 
-                        <select name="id_proveedor"
-                                id="selectProveedor"
-                                class="form-select @error('id_proveedor') is-invalid @enderror">
+                        <select name="id_proveedor" id="selectProveedor"
+                            class="form-select @error('id_proveedor') is-invalid @enderror">
                             <option value="">Seleccione un proveedor</option>
                             @foreach($proveedores as $prv)
-                                <option value="{{ trim($prv->id_proveedor) }}">
-                                    {{ trim($prv->prv_nombre) }}
+                                <option value="{{ $prv->getIdLimpio() }}">
+                                    {{ $prv->getNombreLimpio() }}
                                 </option>
                             @endforeach
                         </select>
 
                         @error('id_proveedor')
-                        <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
@@ -76,66 +75,68 @@
         <div class="table-responsive mb-3">
             <table class="table table-bordered">
                 <thead>
-                <tr>
-                    <th style="width:42%">Producto</th>
-                    <th class="text-end">Valor</th>
-                    <th class="text-center">Cantidad</th>
-                    <th class="text-end">Subtotal</th>
-                    <th class="text-center">Acción</th>
-                </tr>
+                    <tr>
+                        <th style="width:42%">Producto</th>
+                        <th class="text-end">Valor</th>
+                        <th class="text-center">Cantidad</th>
+                        <th class="text-end">Subtotal</th>
+                        <th class="text-center">Acción</th>
+                    </tr>
                 </thead>
 
                 <tbody id="contenedor-detalle">
-                <tr class="item-detalle">
-                    <td>
-                        <select class="form-select form-select-sm producto-select"
-                                name="productos[0][id_producto]"
+                    <tr class="item-detalle">
+                        <td>
+                            <select class="form-select form-select-sm producto-select" name="productos[0][id_producto]"
                                 onchange="actualizarPrecioOC(this)">
-                            <option value="">Seleccione un producto</option>
-                            @foreach($productos as $p)
-                                <option value="{{ trim($p->id_producto) }}"
-                                        data-precio="{{ $p->pro_valor_compra ?? 0 }}">
-                                    {{ trim($p->pro_nombre) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </td>
+                                <option value="">Seleccione un producto</option>
+                                @foreach($productos as $p)
+                                    <option value="{{ $p->getIdLimpio() }}" data-precio="{{ $p->pro_valor_compra ?? 0 }}">
+                                        {{ $p->getNombreLimpio() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </td>
 
-                    <td class="text-end"><span class="precio">0.00</span></td>
+                        <td class="text-end"><span class="precio">0.00</span></td>
 
-                    <td>
-                        <input type="number"
-                               name="productos[0][cantidad]"
-                               class="form-control form-control-sm text-center cantidad"
-                               min="1" value="1" disabled
-                               oninput="actualizarSubtotalOC(this)">
-                    </td>
+                        <td>
+                            <input type="number" name="productos[0][cantidad]"
+                                class="form-control form-control-sm text-center cantidad" min="1" value="1" disabled
+                                oninput="actualizarSubtotalOC(this)">
+                        </td>
 
-                    <td class="text-end"><strong class="subtotal">0.00</strong></td>
+                        <td class="text-end"><strong class="subtotal">0.00</strong></td>
 
-                    <td class="text-center">
-                        <button type="button"
-                                class="btn btn-danger btn-sm"
-                                onclick="eliminarItemOC(this)">
-                            Quitar
-                        </button>
-                    </td>
-                </tr>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="eliminarItemOC(this)">
+                                Quitar
+                            </button>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
 
-        <button type="button" class="btn btn-concho btn-sm mb-3"
-                onclick="agregarItemOC()">+ Agregar producto</button>
+        <button type="button" class="btn btn-concho btn-sm mb-3" onclick="agregarItemOC()">+ Agregar producto</button>
 
         <input type="hidden" name="accion" id="accionOC" value="guardar">
 
         <div class="row">
             <div class="col-md-5">
                 <table class="table table-bordered">
-                    <tr><th>Subtotal</th><td class="text-end" id="subtotal-general">0.00</td></tr>
-                    <tr><th>IVA (15%)</th><td class="text-end" id="iva-general">0.00</td></tr>
-                    <tr><th>TOTAL</th><td class="text-end"><strong id="total-general">0.00</strong></td></tr>
+                    <tr>
+                        <th>Subtotal</th>
+                        <td class="text-end" id="subtotal-general">0.00</td>
+                    </tr>
+                    <tr>
+                        <th>IVA (15%)</th>
+                        <td class="text-end" id="iva-general">0.00</td>
+                    </tr>
+                    <tr>
+                        <th>TOTAL</th>
+                        <td class="text-end"><strong id="total-general">0.00</strong></td>
+                    </tr>
                 </table>
 
                 <div class="d-flex gap-2">
@@ -158,33 +159,33 @@
             tr.className = 'item-detalle';
 
             tr.innerHTML = `
-        <td>
-            <select class="form-select form-select-sm producto-select"
-                    name="productos[${indexOC}][id_producto]"
-                    onchange="actualizarPrecioOC(this)">
-                <option value="">Seleccione un producto</option>
-                @foreach($productos as $p)
-            <option value="{{ trim($p->id_producto) }}"
-                        data-precio="{{ $p->pro_valor_compra ?? 0 }}">
-                    {{ trim($p->pro_nombre) }}
-            </option>
-@endforeach
-            </select>
-        </td>
-        <td class="text-end"><span class="precio">0.00</span></td>
-        <td>
-            <input type="number"
-                   name="productos[${indexOC}][cantidad]"
-                   class="form-control form-control-sm text-center cantidad"
-                   min="1" value="1" disabled
-                   oninput="actualizarSubtotalOC(this)">
-        </td>
-        <td class="text-end"><strong class="subtotal">0.00</strong></td>
-        <td class="text-center">
-            <button type="button" class="btn btn-danger btn-sm"
-                    onclick="eliminarItemOC(this)">Quitar</button>
-        </td>
-    `;
+            <td>
+                <select class="form-select form-select-sm producto-select"
+                        name="productos[${indexOC}][id_producto]"
+                        onchange="actualizarPrecioOC(this)">
+                    <option value="">Seleccione un producto</option>
+                    @foreach($productos as $p)
+                        <option value="{{ $p->getIdLimpio() }}"
+                                    data-precio="{{ $p->pro_valor_compra ?? 0 }}">
+                                {{ $p->getNombreLimpio() }}
+                        </option>
+                    @endforeach
+                </select>
+            </td>
+            <td class="text-end"><span class="precio">0.00</span></td>
+            <td>
+                <input type="number"
+                       name="productos[${indexOC}][cantidad]"
+                       class="form-control form-control-sm text-center cantidad"
+                       min="1" value="1" disabled
+                       oninput="actualizarSubtotalOC(this)">
+            </td>
+            <td class="text-end"><strong class="subtotal">0.00</strong></td>
+            <td class="text-center">
+                <button type="button" class="btn btn-danger btn-sm"
+                        onclick="eliminarItemOC(this)">Quitar</button>
+            </td>
+        `;
             tbody.appendChild(tr);
             indexOC++;
         }

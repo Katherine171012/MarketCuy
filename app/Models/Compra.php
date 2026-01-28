@@ -50,10 +50,10 @@ class Compra extends Model
 
         // 2) Luego por el campo que el usuario selecciona en "Ordenar por"
         $campoOrden = match ($orden) {
-            'fecha'     => 'oc_fecha_hora',
-            'estado'    => 'estado_oc',
+            'fecha' => 'oc_fecha_hora',
+            'estado' => 'estado_oc',
             'proveedor' => 'id_proveedor',
-            default     => 'oc_fecha_hora',
+            default => 'oc_fecha_hora',
         };
 
         // Dirección: para que se vea "de arriba hacia abajo" (más reciente arriba en fecha)
@@ -82,9 +82,9 @@ class Compra extends Model
 
     public static function spCrear(string $idProveedor, $fecha, array $productos, array $cantidades, array $valores): string
     {
-        $pgProductos  = self::pgArrayText($productos);
+        $pgProductos = self::pgArrayText($productos);
         $pgCantidades = self::pgArrayInt($cantidades);
-        $pgValores    = self::pgArrayNumeric($valores);
+        $pgValores = self::pgArrayNumeric($valores);
 
         $row = DB::selectOne(
             "SELECT public.sp_oc_crear(?, ?::timestamp, ?::text[], ?::integer[], ?::numeric[]) AS id_oc",
@@ -97,7 +97,7 @@ class Compra extends Model
     private static function pgArrayText(array $arr): string
     {
         $arr = array_map(function ($v) {
-            $v = trim((string)$v);
+            $v = trim((string) $v);
             $v = str_replace(['\\', '"'], ['\\\\', '\\"'], $v);
             return '"' . $v . '"';
         }, $arr);
@@ -107,14 +107,14 @@ class Compra extends Model
 
     private static function pgArrayInt(array $arr): string
     {
-        $arr = array_map(fn($v) => (int)$v, $arr);
+        $arr = array_map(fn($v) => (int) $v, $arr);
         return '{' . implode(',', $arr) . '}';
     }
 
     private static function pgArrayNumeric(array $arr): string
     {
         $arr = array_map(function ($v) {
-            $n = is_null($v) ? 0 : (float)$v;
+            $n = is_null($v) ? 0 : (float) $v;
             return rtrim(rtrim(number_format($n, 4, '.', ''), '0'), '.');
         }, $arr);
 
@@ -123,9 +123,9 @@ class Compra extends Model
 
     public static function spActualizar(string $idCompra, string $idProveedor, $fechaIgnorada, array $productos, array $cantidades, array $valores): string
     {
-        $pgProductos  = self::pgArrayText($productos);
+        $pgProductos = self::pgArrayText($productos);
         $pgCantidades = self::pgArrayInt($cantidades);
-        $pgValores    = self::pgArrayNumeric($valores);
+        $pgValores = self::pgArrayNumeric($valores);
 
         $row = DB::selectOne(
             "SELECT public.sp_oc_actualizar(?, ?, ?::text[], ?::integer[], ?::numeric[]) AS msg",
@@ -145,5 +145,49 @@ class Compra extends Model
         $sql = "SELECT public.sp_oc_anular(?) AS mensaje";
         $res = DB::selectOne($sql, [$idCompra]);
         return (string) ($res->mensaje ?? '');
+    }
+
+    // ==========================================
+    // Métodos helper para limpiar lógica de vistas
+    // ==========================================
+
+    /**
+     * Determina si la orden de compra está en estado Abierta
+     */
+    public function esAbierta(): bool
+    {
+        return trim($this->estado_oc) === 'ABI';
+    }
+
+    /**
+     * Determina si la orden de compra está Aprobada
+     */
+    public function esAprobada(): bool
+    {
+        return trim($this->estado_oc) === 'APR';
+    }
+
+    /**
+     * Determina si la orden de compra está Anulada
+     */
+    public function esAnulada(): bool
+    {
+        return trim($this->estado_oc) === 'ANU';
+    }
+
+    /**
+     * Obtiene el ID de la compra limpio (sin espacios)
+     */
+    public function getIdLimpio(): string
+    {
+        return trim((string) $this->id_compra);
+    }
+
+    /**
+     * Obtiene el ID del proveedor limpio (sin espacios)
+     */
+    public function getIdProveedorLimpio(): string
+    {
+        return trim((string) $this->id_proveedor);
     }
 }
