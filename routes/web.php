@@ -8,6 +8,7 @@ use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\FacturaController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\DetalleFacturaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -91,26 +92,57 @@ Route::prefix('proveedores')->group(function () {
     Route::delete('/{proveedor}', [ProveedorController::class, 'destroy'])->name('proveedores.destroy');
 });
 
-/*
-|--------------------------------------------------------------------------
-| FACTURAS
-|--------------------------------------------------------------------------
-*/
 Route::prefix('facturas')->group(function () {
+
+    Route::get('/', [FacturaController::class, 'index'])
+        ->name('facturas.index');
+
+    Route::get('/crear', [FacturaController::class, 'create'])
+        ->name('facturas.create');
     Route::get('/', [FacturaController::class, 'index'])->name('facturas.index');
     Route::get('/crear', [FacturaController::class, 'create'])->name('facturas.create');
 
-    Route::post('/', [FacturaController::class, 'store'])->name('facturas.store');
-    Route::post('/{idFactura}/aprobar', [FacturaController::class, 'aprobar'])->name('facturas.aprobar');
+    Route::post('/', [FacturaController::class, 'store'])
+        ->name('facturas.store');
 
-    Route::get('/{idFactura}/editar', [FacturaController::class, 'edit'])->name('facturas.edit');
-    Route::put('/{idFactura}', [FacturaController::class, 'update'])->name('facturas.update');
+    Route::get('/{idFactura}/editar', [FacturaController::class, 'edit'])
+        ->name('facturas.edit');
 
-    Route::delete('/{idFactura}/anular', [FacturaController::class, 'destroy'])->name('facturas.anular');
 
-    Route::get('/buscar', [FacturaController::class, 'buscar'])->name('facturas.buscar');
-    Route::post('/buscar', [FacturaController::class, 'ejecutarBusqueda'])->name('facturas.buscar.ejecutar');
+    Route::put('/{idFactura}', [FacturaController::class, 'update'])
+        ->name('facturas.update');
+
+    Route::post('/{idFactura}/aprobar', [FacturaController::class, 'aprobar'])
+        ->name('facturas.aprobar');
+
+    Route::delete('/{idFactura}/anular', [FacturaController::class, 'destroy'])
+        ->name('facturas.anular');
+
+
+    Route::get('/buscar', [FacturaController::class, 'buscar'])
+        ->name('facturas.buscar');
+
+    Route::post('/buscar', [FacturaController::class, 'ejecutarBusqueda'])
+        ->name('facturas.buscar.ejecutar');
+
+    /* ===============================
+     * DETALLE DE FACTURA (REAL BD)
+     * =============================== */
+
+    Route::post('/{idFactura}/detalle', [DetalleFacturaController::class, 'store'])
+        ->name('facturas.detalle.store');
+
+
+    Route::put('/{idFactura}/detalle/{idProducto}', [DetalleFacturaController::class, 'update'])
+        ->name('facturas.detalle.update');
+
+
+
+    // Ruta para eliminar un detalle de factura
+    Route::delete('/{idFactura}/detalle/{idProducto}', [DetalleFacturaController::class, 'destroy'])
+        ->name('facturas.detalle.destroy');
 });
+
 
 /*
 |--------------------------------------------------------------------------

@@ -55,7 +55,7 @@ class FacturaController extends Controller
      * ====================================================== */
     public function create()
     {
-        $clientes  = Cliente::where('estado_cli', 'ACT')->get();
+        $clientes = Cliente::where('estado_cli', 'ACT')->get();
         $productos = Producto::obtenerActivos();
 
         return view('facturas.create', compact('clientes', 'productos'));
@@ -63,6 +63,9 @@ class FacturaController extends Controller
 
     /* ======================================================
      * F5.1 – GENERAR FACTURA
+     * ====================================================== */
+    /* ======================================================
+     * F5.1 – CREAR FACTURA (SOLO CABECERA)
      * ====================================================== */
     public function store(Request $request)
     {
@@ -74,22 +77,15 @@ class FacturaController extends Controller
                 ->with('warning', config('mensajes.M44'));
         }
 
-        if (empty($request->productos) || !is_array($request->productos)) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('warning', config('mensajes.M45'));
-        }
-
         try {
-            Factura::crearFactura(
+
+            $factura = Factura::crearCabecera(
                 $request->id_cliente,
-                $request->fac_descripcion,
-                $request->productos
+                $request->fac_descripcion
             );
 
             return redirect()
-                ->route('facturas.index')
+                ->route('facturas.edit', $factura->id_factura)
                 ->with('ok', config('mensajes.M46'));
 
         } catch (\Exception $e) {
@@ -100,22 +96,23 @@ class FacturaController extends Controller
         }
     }
 
+
     /* ======================================================
      * F5.1 – APROBAR FACTURA
      * ====================================================== */
     public function aprobar(string $idFactura)
     {
         try {
+            // Llamar al método aprobarFactura en el modelo
             Factura::aprobarFactura($idFactura);
 
             return redirect()
                 ->route('facturas.index')
-                ->with('ok', config('mensajes.M70'));
-
+                ->with('ok', config('mensajes.M70')); // Mensaje de éxito
         } catch (\Exception $e) {
             return redirect()
                 ->back()
-                ->with('error', $e->getMessage());
+                ->with('error', $e->getMessage()); // Mostrar error si ocurre
         }
     }
 
@@ -163,35 +160,10 @@ class FacturaController extends Controller
                     ->with('error', config('mensajes.M48'));
             }
 
-            // ---------- VALIDACIONES ----------
-            if (empty($request->productos) || !is_array($request->productos)) {
-                return redirect()
-                    ->back()
-                    ->withInput()
-                    ->with('warning', config('mensajes.M45'));
-            }
-
-            foreach ($request->productos as $item) {
-                if (empty($item['id_producto'])) {
-                    continue;
-                }
-
-                if (
-                    empty($item['cantidad']) ||
-                    !is_numeric($item['cantidad']) ||
-                    $item['cantidad'] <= 0
-                ) {
-                    return redirect()
-                        ->back()
-                        ->withInput()
-                        ->with('warning', config('mensajes.M35'));
-                }
-            }
-
-            Factura::modificarFactura(
+            // Solo actualizamos la cabecera (descripción) y recalculamos totales
+            Factura::actualizarCabecera(
                 $idFactura,
-                $request->fac_descripcion,
-                $request->productos
+                $request->fac_descripcion
             );
 
             return redirect()

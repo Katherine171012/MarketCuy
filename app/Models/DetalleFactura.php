@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class DetalleFactura extends Model
 {
     protected $table = 'proxfac';
+
+    // Clave primaria compuesta (id_factura + id_producto)
     public $incrementing = false;
     public $timestamps = false;
-    protected $primaryKey = null;
+    protected $primaryKey = ['id_factura', 'id_producto'];
 
     protected $fillable = [
         'id_factura',
@@ -17,20 +20,16 @@ class DetalleFactura extends Model
         'pxf_cantidad',
         'pxf_precio',
         'pxf_subtotal',
-        'estado_pxf'
+        'estado_pxf',
+        'sync_updated_at'
     ];
 
     /* ======================
      * RELACIONES
      * ====================== */
-
     public function producto()
     {
-        return $this->belongsTo(
-            Producto::class,
-            'id_producto',
-            'id_producto'
-        );
+        return $this->belongsTo(Producto::class, 'id_producto', 'id_producto');
     }
 
     /* ======================
@@ -56,13 +55,31 @@ class DetalleFactura extends Model
         int $cantidad,
         float $precio
     ) {
-        return self::create([
-            'id_factura'   => $idFactura,
-            'id_producto'  => $idProducto,
-            'pxf_cantidad' => $cantidad,
-            'pxf_precio'   => $precio,
-            'pxf_subtotal' => $cantidad * $precio,
-            'estado_pxf'   => 'ACT'
+        // Validaciones previas antes de insertar en DB
+        if (empty($idFactura) || empty($idProducto) || $cantidad <= 0 || $precio <= 0) {
+            throw new \Exception('Datos inválidos para insertar detalle');
+        }
+
+        // Validación de existencia de producto y factura
+        $producto = Producto::find($idProducto);
+        if (!$producto || $producto->estado_prod !== 'ACT') {
+            throw new \Exception('Producto no válido o no disponible');
+        }
+
+        $factura = Factura::find($idFactura);
+        if (!$factura || $factura->estado_fac !== 'ABI') {
+            throw new \Exception('Factura no válida o no editable');
+        }
+
+        // Inserción en la tabla de detalles
+        return DB::table('proxfac')->insert([
+            'id_factura'      => $idFactura,
+            'id_producto'     => $idProducto,
+            'pxf_cantidad'    => $cantidad,
+            'pxf_precio'      => $precio,
+            'pxf_subtotal'    => $cantidad * $precio,
+            'estado_pxf'      => 'ACT',
+            'sync_updated_at' => now(),
         ]);
     }
 
@@ -71,8 +88,7 @@ class DetalleFactura extends Model
      */
     public static function eliminarPorFactura(string $idFactura)
     {
-        return self::where('id_factura', $idFactura)->delete();
-        // si fuera lógico:
-        // ->update(['estado_pxf' => 'INA']);
+        // Puedes eliminar detalles por factura o realizar una inactivación lógica
+        return self::where('id_factura', $idFactura)->delete();  // Aquí es un delete físico
     }
 }
