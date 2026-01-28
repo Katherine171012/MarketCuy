@@ -20,7 +20,8 @@ class Factura extends Model
         'fac_fecha_hora',
         'fac_subtotal',
         'fac_iva',
-        'estado_fac'
+        'estado_fac',
+        'canal_venta', // ← obligatorio por BD
     ];
 
     /* ======================
@@ -38,8 +39,8 @@ class Factura extends Model
     }
 
     /* ======================
- * MÉTODOS DE CÁLCULO
- * ====================== */
+     * MÉTODOS DE CÁLCULO
+     * ====================== */
 
     /**
      * Constante para IVA (Ecuador 12%)
@@ -87,10 +88,10 @@ class Factura extends Model
      */
     public function getEstadoTextoAttribute(): string
     {
-        return match($this->estado_fac) {
-            'ABI' => msg('facturas.estado.abierta'),
-            'APR' => msg('facturas.estado.aprobada'),
-            'ANU' => msg('facturas.estado.anulada'),
+        return match ($this->estado_fac) {
+            'ABI' => 'Abierta',
+            'APR' => 'Aprobada',
+            'ANU' => 'Anulada',
             default => $this->estado_fac
         };
     }
@@ -125,11 +126,11 @@ class Factura extends Model
         // Columnas permitidas para ordenar (SEGURIDAD)
         $columnasPermitidas = [
             'id_factura' => 'f.id_factura',
-            'cliente'    => 'c.cli_nombre',
-            'fecha'      => 'f.fac_fecha_hora',
-            'subtotal'   => 'f.subtotal',
-            'total'      => 'f.total',
-            'estado'     => 'f.estado_fac',
+            'cliente' => 'c.cli_nombre',
+            'fecha' => 'f.fac_fecha_hora',
+            'subtotal' => 'f.subtotal',
+            'total' => 'f.total',
+            'estado' => 'f.estado_fac',
         ];
 
         $dir = ($dir === 'desc') ? 'desc' : 'asc';
@@ -225,16 +226,15 @@ class Factura extends Model
             ->selectRaw("MAX(CAST(SUBSTRING(id_factura FROM 4) AS INTEGER)) AS max_num")
             ->value('max_num');
 
-        $nextNum = ($maxNum !== null) ? ((int)$maxNum + 1) : 1;
+        $nextNum = ($maxNum !== null) ? ((int) $maxNum + 1) : 1;
 
         return 'FCT' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
     }
 
-
     /**
-     * F5.1 – Crear factura
+     * F5.1 – Crear SOLO cabecera de factura
      */
-    public static function crearFactura(string $idCliente, ?string $descripcion, array $productos)
+    public static function crearCabecera(string $idCliente, ?string $descripcion): self
     {
         DB::beginTransaction();
 
@@ -243,61 +243,51 @@ class Factura extends Model
             $idFactura = self::generarSiguienteId();
 
             $factura = self::create([
-                'id_factura'     => $idFactura,
-                'id_cliente'     => $idCliente,
-                'fac_descripcion'=> $descripcion,
+                'id_factura' => $idFactura,
+                'id_cliente' => $idCliente,
+                'fac_descripcion' => $descripcion,
                 'fac_fecha_hora' => now(),
-                'fac_subtotal'   => 0,
-                'fac_iva'        => 0,
-                'estado_fac'     => 'ABI'
+                'fac_subtotal' => 0,
+                'fac_iva' => 0,
+                'estado_fac' => 'ABI',
+                'canal_venta' => 'IS', // Sitio
             ]);
 
-            $subtotalFactura = 0;
 
-            foreach ($productos as $item) {
+            DB::commit();
+            return $factura;
 
-                if (empty($item['id_producto']) || empty($item['cantidad'])) {
-                    continue;
-                }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 
-                $producto = Producto::where('id_producto', $item['id_producto'])
-                    ->where('estado_prod', 'ACT')
-                    ->lockForUpdate()
-                    ->first();
 
-                if (!$producto) {
-                    throw new \Exception(msg('facturas.producto.no_disponible'));
-                }
 
-                if ($item['cantidad'] > $producto->pro_saldo_final) {
-                    throw new \Exception(msg('facturas.cantidad.mayor_stock'));
-                }
+    /**
+     * F5.1 – Crear factura
+     */
+    public static function crearFactura(
+        string $idCliente,
+        ?string $descripcion
+    ) {
+        DB::beginTransaction();
 
-                $subtotal = $item['cantidad'] * $producto->pro_precio_venta;
+        try {
 
-                DetalleFactura::create([
-                    'id_factura'   => $idFactura,
-                    'id_producto'  => $producto->id_producto,
-                    'pxf_cantidad' => $item['cantidad'],
-                    'pxf_precio'   => $producto->pro_precio_venta,
-                    'pxf_subtotal' => $subtotal,
-                    'estado_pxf'   => 'ACT'
-                ]);
+            $idFactura = self::generarSiguienteId();
 
-                $producto->pro_qty_egresos += $item['cantidad'];
-                $producto->pro_saldo_final -= $item['cantidad'];
-                $producto->save();
-
-                $subtotalFactura += $subtotal;
-            }
-
-            if ($subtotalFactura <= 0) {
-                throw new \Exception(msg('facturas.sin_productos'));
-            }
-
-            $factura->fac_subtotal = $subtotalFactura;
-            $factura->fac_iva = (int) round($subtotalFactura * 0.12);
-            $factura->save();
+            $factura = self::create([
+                'id_factura' => $idFactura,
+                'id_cliente' => $idCliente,
+                'fac_descripcion' => $descripcion,
+                'fac_fecha_hora' => now(),
+                'fac_subtotal' => 0,
+                'fac_iva' => 0,
+                'estado_fac' => 'ABI',
+                'canal_venta' => 'IS'
+            ]);
 
             DB::commit();
             return $factura;
@@ -313,14 +303,10 @@ class Factura extends Model
         DB::beginTransaction();
 
         try {
-            $factura = self::lockForUpdate()->findOrFail($idFactura);
-
-            if ($factura->estado_fac !== 'ABI') {
-                throw new \Exception(msg('facturas.no_aprobable'));
-            }
-
-            $factura->estado_fac = 'APR';
-            $factura->save();
+            // Llamar al procedimiento almacenado de aprobación de factura
+            // NOTA: El SP definido en base de datos es 'aprobar_factura'
+            // Casting a ::char para coincidir con la definición estricta 'character'
+            DB::select('CALL aprobar_factura(:idFactura::char)', ['idFactura' => $idFactura]);
 
             DB::commit();
         } catch (\Exception $e) {
@@ -328,6 +314,8 @@ class Factura extends Model
             throw $e;
         }
     }
+
+
 
     public static function obtenerParaLista($porPagina = 10)
     {
@@ -353,72 +341,32 @@ class Factura extends Model
     /**
      * F5.2 – Modificar factura
      */
-    public static function modificarFactura(string $idFactura, ?string $descripcion, array $productos)
+    /**
+     * F5.2 – Actualizar cabecera (descripción) y totales
+     */
+    public static function actualizarCabecera(string $idFactura, ?string $descripcion)
     {
         DB::beginTransaction();
 
         try {
-
             $factura = self::with('detalles')
                 ->lockForUpdate()
                 ->findOrFail($idFactura);
 
             if ($factura->estado_fac !== 'ABI') {
-                throw new \Exception(msg('facturas.no_editable'));
+                throw new \Exception(config('mensajes.M63'));
             }
 
-            // Revertir inventario anterior
-            foreach ($factura->detalles as $detalle) {
-
-                $producto = Producto::where('id_producto', $detalle->id_producto)
-                    ->lockForUpdate()
-                    ->first();
-
-                $producto->pro_qty_egresos -= $detalle->pxf_cantidad;
-                $producto->pro_saldo_final += $detalle->pxf_cantidad;
-                $producto->save();
-
-                DetalleFactura::where('id_factura', $detalle->id_factura)
-                    ->where('id_producto', $detalle->id_producto)
-                    ->delete();
-            }
-
-            $subtotalFactura = 0;
-
-            foreach ($productos as $item) {
-
-                if (empty($item['id_producto']) || empty($item['cantidad'])) {
-                    continue;
-                }
-
-                $producto = Producto::where('id_producto', $item['id_producto'])
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($item['cantidad'] > $producto->pro_saldo_final) {
-                    throw new \Exception(msg('facturas.cantidad.mayor_stock'));
-                }
-
-                $subtotal = $item['cantidad'] * $producto->pro_precio_venta;
-
-                DetalleFactura::create([
-                    'id_factura'   => $factura->id_factura,
-                    'id_producto'  => $producto->id_producto,
-                    'pxf_cantidad' => $item['cantidad'],
-                    'pxf_precio'   => $producto->pro_precio_venta,
-                    'pxf_subtotal' => $subtotal,
-                    'estado_pxf'   => 'ACT'
-                ]);
-
-                $producto->pro_qty_egresos += $item['cantidad'];
-                $producto->pro_saldo_final -= $item['cantidad'];
-                $producto->save();
-
-                $subtotalFactura += $subtotal;
-            }
+            // Recalcular subtotal desde los detalles existentes
+            $subtotalFactura = DB::table('proxfac')
+                ->where('id_factura', $idFactura)
+                ->where('estado_pxf', 'ACT')
+                ->sum('pxf_subtotal');
 
             if ($subtotalFactura <= 0) {
-                throw new \Exception(msg('facturas.sin_productos'));
+                // Opcional: Permitir guardar descripción aunque no tenga productos,
+                // o mantener validación si es requisito estricto.
+                // throw new \Exception(config('mensajes.M45'));
             }
 
             $factura->fac_descripcion = $descripcion;
@@ -443,29 +391,8 @@ class Factura extends Model
 
         try {
 
-            $factura = self::with('detalles')
-                ->lockForUpdate()
-                ->findOrFail($idFactura);
-
-            if ($factura->estado_fac !== 'ABI') {
-                throw new \Exception(msg('facturas.no_anulable'));
-            }
-
-            foreach ($factura->detalles as $detalle) {
-
-                $producto = Producto::where('id_producto', $detalle->id_producto)
-                    ->lockForUpdate()
-                    ->first();
-
-                $producto->pro_qty_egresos -= $detalle->pxf_cantidad;
-                $producto->pro_saldo_final += $detalle->pxf_cantidad;
-                $producto->save();
-
-                $detalle->update(['estado_pxf' => 'INA']);
-            }
-
-            $factura->estado_fac = 'ANU';
-            $factura->save();
+            // Llamar al procedimiento almacenado de anulación
+            DB::select('CALL anular_factura(:idFactura::char)', ['idFactura' => $idFactura]);
 
             DB::commit();
 
@@ -487,7 +414,7 @@ class Factura extends Model
             empty($params['fecha_desde']) &&
             empty($params['fecha_hasta'])
         ) {
-            throw new \Exception(msg('facturas.parametros.vacios'));
+            throw new \Exception(config('mensajes.M57'));
         }
 
         $query = DB::table('vw_facturas_totales as f')
@@ -537,26 +464,26 @@ class Factura extends Model
             ->get();
 
         if ($resultados->isEmpty()) {
-            throw new \Exception(msg('facturas.sin_resultados'));
+            throw new \Exception(config('mensajes.M59'));
         }
 
         return $resultados;
     }
 
     /* ======================
- * MÉTODOS PARA VISTAS
- * ====================== */
+     * MÉTODOS PARA VISTAS
+     * ====================== */
 
     /**
      * Obtener badge HTML del estado
      */
     public function getEstadoBadgeAttribute(): string
     {
-        return match($this->estado_fac) {
-            'ABI' => '<span class="badge bg-warning text-dark">'.msg('facturas.estado.abierta').'</span>',
-            'APR' => '<span class="badge bg-success">'.msg('facturas.estado.aprobada').'</span>',
-            'ANU' => '<span class="badge bg-danger">'.msg('facturas.estado.anulada').'</span>',
-            default => '<span class="badge bg-secondary">'.$this->estado_fac.'</span>'
+        return match ($this->estado_fac) {
+            'ABI' => '<span class="badge bg-warning text-dark">Abierta</span>',
+            'APR' => '<span class="badge bg-success">Aprobada</span>',
+            'ANU' => '<span class="badge bg-danger">Anulada</span>',
+            default => '<span class="badge bg-secondary">' . $this->estado_fac . '</span>'
         };
     }
 

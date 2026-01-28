@@ -6,10 +6,11 @@
 
     <h1 class="mb-3">
         {{ $factura->esEditable()
-            ? 'Modificar Factura ' . $factura->id_factura
-            : 'Ver Factura ' . $factura->id_factura
-        }}
+        ? 'Modificar Factura ' . $factura->id_factura
+        : 'Ver Factura ' . $factura->id_factura
+            }}
     </h1>
+    <input type="hidden" id="id_factura_hidden" value="{{ $factura->id_factura }}">
 
     {{-- MENSAJE SOLO VISUALIZACIÓN --}}
     @if(!$factura->esEditable())
@@ -25,172 +26,186 @@
         <form action="{{ route('facturas.update', $factura->id_factura) }}" method="POST" id="formEditarFactura">
             @csrf
             @method('PUT')
-            @endif
-
-            {{-- CLIENTE / DESCRIPCIÓN --}}
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">Cliente</label>
-                    <input type="text"
-                           class="form-control"
-                           value="{{ $factura->cliente->cli_nombre }}"
-                           disabled>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Descripción</label>
-                    @if($factura->esEditable())
-                        <input type="text"
-                               name="fac_descripcion"
-                               class="form-control"
-                               value="{{ $factura->fac_descripcion }}">
-                    @else
-                        <p class="form-control-plaintext">
-                            {{ $factura->fac_descripcion ?: '(Sin descripción)' }}
-                        </p>
-                    @endif
-                </div>
-            </div>
-
-            <h4 class="mb-2">Productos</h4>
-
-            {{-- TABLA DE PRODUCTOS --}}
-            <div class="table-responsive mb-3">
-                <table class="table table-bordered table-custom">
-                    <thead>
-                    <tr>
-                        <th style="width: 40%;">Producto</th>
-                        <th class="text-end" style="width: 15%;">Precio Unit.</th>
-                        <th class="text-center" style="width: 15%;">Cantidad</th>
-                        <th class="text-end" style="width: 15%;">Subtotal</th>
-                        @if($factura->esEditable())
-                            <th class="text-center" style="width: 15%;">Acción</th>
-                        @endif
-                    </tr>
-                    </thead>
-
-                    <tbody id="contenedor-productos">
-                    @foreach ($factura->detalles as $i => $detalle)
-                        <tr class="producto-item">
-                            <td>
-                                @if($factura->esEditable())
-                                    <select name="productos[{{ $i }}][id_producto]"
-                                            class="form-select form-select-sm"
-                                            onchange="actualizarPrecio(this)">
-                                        <option value="">Seleccione un producto</option>
-                                        @foreach($productos as $producto)
-                                            <option value="{{ $producto->id_producto }}"
-                                                    data-precio="{{ $producto->pro_precio_venta }}"
-                                                {{ $detalle->id_producto === $producto->id_producto ? 'selected' : '' }}>
-                                                {{ $producto->pro_descripcion }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                @else
-                                    {{ $detalle->producto->pro_descripcion }}
-                                @endif
-                            </td>
-
-                            <td class="text-end align-middle">
-                                <span class="precio">{{ number_format($detalle->pxf_precio, 2) }}</span>
-                            </td>
-
-                            <td class="text-center">
-                                @if($factura->esEditable())
-                                    <input type="number"
-                                           name="productos[{{ $i }}][cantidad]"
-                                           class="form-control form-control-sm text-center cantidad"
-                                           min="1"
-                                           value="{{ $detalle->pxf_cantidad }}"
-                                           oninput="actualizarSubtotal(this)">
-                                @else
-                                    {{ $detalle->pxf_cantidad }}
-                                @endif
-                            </td>
-
-                            <td class="text-end align-middle">
-                                <strong class="subtotal">{{ number_format($detalle->pxf_subtotal, 2) }}</strong>
-                            </td>
-
-                            @if($factura->esEditable())
-                                <td class="text-center">
-                                    <button type="button"
-                                            class="btn btn-danger btn-sm"
-                                            onclick="eliminarProducto(this)">
-                                        <small>Quitar</small>
-                                    </button>
-                                </td>
-                            @endif
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- AGREGAR PRODUCTO --}}
-            @if($factura->esEditable())
-                <div class="mb-3">
-                    <button type="button"
-                            class="btn btn-concho btn-sm"
-                            onclick="agregarProducto()">
-                        + Agregar producto
-                    </button>
-                </div>
-            @endif
-
-            <div class="d-flex justify-content-center mt-2" id="paginacion-productos"></div>
-
-
-            {{-- RESUMEN --}}
-            <div class="row align-items-end">
-                <div class="col-md-4">
-                    <h5 class="mb-2">RESUMEN</h5>
-
-                    <table class="table table-bordered mb-3">
-                        <tr>
-                            <th>Subtotal:</th>
-                            <td class="text-end" id="subtotal-general">{{ number_format($resumen['subtotal'], 2) }}</td>
-                        </tr>
-                        <tr>
-                            <th>IVA:</th>
-                            <td class="text-end" id="iva-general">{{ number_format($resumen['iva'], 2) }}</td>
-                        </tr>
-                        <tr>
-                            <th>TOTAL:</th>
-                            <td class="text-end">
-                                <strong id="total-general">{{ number_format($resumen['total'], 2) }}</strong>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <div class="d-flex gap-3 mt-3">
-                        <a href="{{ route('facturas.index') }}"
-                           class="btn btn-concho px-5 text-nowrap">
-                            {{ $factura->esEditable() ? 'Cancelar' : 'Volver' }}
-                        </a>
-
-                        @if($factura->esEditable())
-                            <button type="button"
-                                    class="btn btn-concho px-5 text-nowrap"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalGuardarFactura">
-                                Guardar Cambios
-                            </button>
-
-                            <button type="button"
-                                    class="btn btn-concho px-5 text-nowrap"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#modalAprobarFactura">
-                                Aprobar Factura
-                            </button>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            @if($factura->esEditable())
-        </form>
     @endif
+
+        {{-- CABECERA DE FACTURA --}}
+        <div class="row mb-3">
+
+            {{-- ID FACTURA --}}
+            <div class="col-md-3">
+                <label class="form-label">N° Factura</label>
+                <input type="text" class="form-control" value="{{ $factura->id_factura }}" readonly>
+            </div>
+
+            {{-- FECHA --}}
+            <div class="col-md-3">
+                <label class="form-label">Fecha</label>
+                <input type="text" class="form-control"
+                    value="{{ \Carbon\Carbon::parse($factura->fac_fecha_hora)->format('d/m/Y H:i') }}" readonly>
+            </div>
+
+            {{-- CLIENTE --}}
+            <div class="col-md-6">
+                <label class="form-label">Cliente</label>
+                <input type="text" class="form-control" value="{{ $factura->cliente->cli_nombre }}" readonly>
+            </div>
+
+        </div>
+
+        <div class="row mb-3">
+
+            {{-- CÉDULA / RUC --}}
+            <div class="col-md-3">
+                <label class="form-label">Cédula / RUC</label>
+                <input type="text" class="form-control" value="{{ $factura->cliente->cli_ruc_ced }}" readonly>
+            </div>
+
+            {{-- DESCRIPCIÓN --}}
+            <div class="col-md-9">
+                <label class="form-label">Descripción</label>
+
+                @if($factura->esEditable())
+                    <input type="text" name="fac_descripcion" class="form-control" value="{{ $factura->fac_descripcion }}">
+                @else
+                    <input type="text" class="form-control" value="{{ $factura->fac_descripcion ?: '(Sin descripción)' }}"
+                        readonly>
+                @endif
+            </div>
+        </div>
+
+        {{-- 1. CIERRE CORRECTO DEL FORM DE CABECERA --}}
+        @if($factura->esEditable())
+            </form>
+        @endif
+
+    <h4 class="mb-2">Productos</h4>
+
+    <div class="table-responsive mb-3">
+        <table class="table table-bordered table-hover table-custom align-middle">
+            <thead>
+                <tr>
+                    {{-- Todos los encabezados con el mismo estilo --}}
+                    <th class="text-center" style="width: 8%">ID</th>
+                    <th style="width: 32%">Producto</th>
+                    <th class="text-center" style="width: 10%">Unidad</th>
+                    <th class="text-center" style="width: 10%">Cantidad</th>
+                    <th class="text-end" style="width: 12%">Precio Unit.</th>
+                    <th class="text-end" style="width: 13%">Subtotal</th>
+                    <th class="text-center" style="width: 15%">Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach ($factura->detalles as $detalle)
+                    <tr>
+                        {{-- ID: Centrado y con la misma fuente que el resto --}}
+                        <td class="text-center">
+                            {{ $detalle->id_producto }}
+                        </td>
+
+                        {{-- Producto: Mantiene negrita para jerarquía, pero misma fuente --}}
+                        <td class="fw-bold">
+                            {{ $detalle->producto->pro_nombre }}
+                        </td>
+
+                        <td class="text-center">
+                            {{ $detalle->producto->pro_um_venta }}
+                        </td>
+
+                        <td class="text-center">
+                            {{ $detalle->pxf_cantidad }}
+                        </td>
+
+                        <td class="text-end">
+                            {{ number_format($detalle->pxf_precio, 2) }}
+                        </td>
+
+                        <td class="text-end fw-bold">
+                            {{ number_format($detalle->pxf_subtotal, 2) }}
+                        </td>
+
+                        <td class="text-center">
+                            {{-- Editar --}}
+                            @if($factura->esEditable())
+                                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#modalEditarProducto" data-factura="{{ $factura->id_factura }}"
+                                    data-producto="{{ $detalle->id_producto }}" data-cantidad="{{ $detalle->pxf_cantidad }}"
+                                    data-stock="{{ $detalle->producto->pro_saldo_final }}">
+                                    Editar
+                                </button>
+
+                                {{-- Eliminar --}}
+                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#modalEliminarProducto" data-factura="{{ $factura->id_factura }}"
+                                    data-producto="{{ $detalle->id_producto }}">
+                                    Eliminar
+                                </button>
+                            @endif
+                        </td>
+
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+
+    {{-- AGREGAR PRODUCTO --}}
+    @if($factura->esEditable())
+        <div class="mb-3">
+            <button type="button" class="btn btn-concho btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarProducto">
+                + Agregar producto
+            </button>
+        </div>
+    @endif
+
+    <div class="d-flex justify-content-center mt-2" id="paginacion-productos"></div>
+
+
+    {{-- RESUMEN --}}
+    <div class="row align-items-end">
+        <div class="col-md-4">
+            <h5 class="mb-2">RESUMEN</h5>
+
+            <table class="table table-bordered mb-3">
+                <tr>
+                    <th>Subtotal:</th>
+                    <td class="text-end" id="subtotal-general">{{ number_format($resumen['subtotal'], 2) }}</td>
+                </tr>
+                <tr>
+                    <th>IVA:</th>
+                    <td class="text-end" id="iva-general">{{ number_format($resumen['iva'], 2) }}</td>
+                </tr>
+                <tr>
+                    <th>TOTAL:</th>
+                    <td class="text-end">
+                        <strong id="total-general">{{ number_format($resumen['total'], 2) }}</strong>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="d-flex gap-3 mt-3">
+                <a href="{{ route('facturas.index') }}" class="btn btn-concho text-nowrap">
+                    {{ $factura->esEditable() ? 'Cancelar' : 'Volver' }}
+                </a>
+
+                @if($factura->esEditable())
+                    <button type="button" class="btn btn-concho text-nowrap" data-bs-toggle="modal"
+                        data-bs-target="#modalGuardarFactura">
+                        Guardar Cambios
+                    </button>
+                @endif
+
+                {{-- Botón de Aprobar Factura --}}
+                @if($factura->esEditable())
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalAprobarFactura">
+                        Aprobar Factura
+                    </button>
+                @endif
+
+            </div>
+        </div>
+    </div>
 
 
     {{-- MODAL CONFIRMAR GUARDADO --}}
@@ -209,15 +224,12 @@
                     </div>
 
                     <div class="modal-footer">
-                        <button type="button"
-                                class="btn btn-secondary"
-                                data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             Cancelar
                         </button>
 
-                        <button type="button"
-                                class="btn btn-primary"
-                                onclick="document.getElementById('formEditarFactura').submit()">
+                        <button type="button" class="btn btn-primary"
+                            onclick="document.getElementById('formEditarFactura').submit()">
                             Sí, guardar
                         </button>
                     </div>
@@ -232,40 +244,137 @@
         <div class="modal fade" id="modalAprobarFactura" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
+                    <form id="formAprobarFactura" action="{{ route('facturas.aprobar', $factura->id_factura) }}" method="POST">
+                        @csrf
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar aprobación</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            ¿Está seguro de aprobar esta factura? Una vez aprobada no podrá modificarse.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Sí, aprobar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 
-                    <div class="modal-header">
-                        <h5 class="modal-title">Confirmar aprobación</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
+    {{-- MODAL AGREGAR PRODUCTO --}}
+    @if($factura->esEditable())
+        <div class="modal fade" id="modalAgregarProducto" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
 
-                    <div class="modal-body">
-                        ¿Está seguro de aprobar esta factura? Una vez aprobada no podrá modificarse.
-                    </div>
+                    <form method="POST" action="{{ route('facturas.detalle.store', $factura->id_factura) }}">
+                        @csrf
 
-                    <div class="modal-footer">
-                        <button type="button"
-                                class="btn btn-secondary"
-                                data-bs-dismiss="modal">
-                            Cancelar
-                        </button>
+                        <div class="modal-header">
+                            <h5 class="modal-title">Agregar producto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
 
-                        <form id="formAprobar"
-                              action="{{ route('facturas.aprobar', $factura->id_factura) }}"
-                              method="POST"
-                              style="display:inline;">
-                            @csrf
-                            <button type="submit" class="btn btn-success">
-                                Sí, aprobar
+                        <div class="modal-body">
+
+                            <div class="mb-3">
+                                <label class="form-label">Producto</label>
+                                <select name="id_producto" class="form-select" required>
+                                    <option value="">Seleccione un producto</option>
+                                    @foreach($productos as $producto)
+                                        <option value="{{ $producto->id_producto }}">
+                                            {{ $producto->pro_nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Cantidad</label>
+                                <input type="number" name="cantidad" class="form-control" min="1" required>
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancelar
                             </button>
-                        </form>
-                    </div>
+
+                            <button type="submit" class="btn btn-concho">
+                                Agregar
+                            </button>
+                        </div>
+
+                    </form>
 
                 </div>
             </div>
         </div>
     @endif
 
-    {{-- SCRIPT SOLO SI ABI (NO CARGAR EN MODO VER) --}}
+    {{-- MODAL EDITAR PRODUCTO --}}
+    @if($factura->esEditable())
+        <div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="POST" id="formEditarDetalle">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">Editar cantidad de producto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Cantidad</label>
+                                <input type="number" id="edit-cantidad" name="cantidad" class="form-control" min="1" required>
+                                <small class="text-muted">Stock disponible: <span id="stock-disponible"></span></small>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-warning">Guardar cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- MODAL ELIMINAR PRODUCTO --}}
+    @if($factura->esEditable())
+        <div class="modal fade" id="modalEliminarProducto" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form method="POST" id="formEliminarDetalle">
+                        @csrf
+                        @method('DELETE')
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar eliminación</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            {{ config('mensajes.M4') }}
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
     @if($factura->esEditable())
         <script>
             const CONFIG = @json($config);
@@ -355,67 +464,6 @@
                 return li;
             }
 
-
-            function agregarProducto() {
-                const tbody = document.getElementById('contenedor-productos');
-                const tr = document.createElement('tr');
-                currentPage = Math.ceil(
-                    document.querySelectorAll('.producto-item').length / PAGE_SIZE
-                );
-                renderPaginacion();
-                tr.classList.add('producto-item');
-
-                tr.innerHTML = `
-                    <td>
-                        <select name="productos[${indexProducto}][id_producto]"
-                                class="form-select form-select-sm"
-                                onchange="actualizarPrecio(this)">
-                            <option value="">${msgSeleccioneProducto}</option>
-                            @foreach($productos as $producto)
-                <option value="{{ $producto->id_producto }}"
-                                        data-precio="{{ $producto->pro_precio_venta }}">
-                                    {{ $producto->pro_descripcion }}
-                </option>
-@endforeach
-                </select>
-            </td>
-
-            <td class="text-end align-middle">
-                <span class="precio">0.00</span>
-            </td>
-
-            <td>
-                <input type="number"
-                       name="productos[${indexProducto}][cantidad]"
-                               class="form-control form-control-sm text-center cantidad"
-                               min="1"
-                               oninput="actualizarSubtotal(this)">
-                    </td>
-
-                    <td class="text-end align-middle">
-                        <strong class="subtotal">0.00</strong>
-                    </td>
-
-                    <td class="text-center">
-                        <button type="button"
-                                class="btn btn-danger btn-sm"
-                                onclick="eliminarProducto(this)">
-                            <small>${msgQuitar}</small>
-                        </button>
-                    </td>
-                `;
-
-                tbody.appendChild(tr);
-                indexProducto++;
-            }
-
-            function eliminarProducto(btn) {
-                btn.closest('.producto-item').remove();
-                actualizarTotales();
-                renderPaginacion();
-            }
-
-
             function actualizarPrecio(select) {
                 const fila = select.closest('.producto-item');
                 const precio = select.options[select.selectedIndex].dataset.precio || 0;
@@ -457,11 +505,69 @@
                 document.getElementById('total-general').textContent = total.toFixed(2);
             }
 
-            document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('DOMContentLoaded', function () {
+                // Inicializar paginación
                 renderPaginacion();
-            });
 
+                // ========== MODAL DE EDICIÓN ==========
+                const modalEditarElement = document.getElementById('modalEditarProducto');
+                if (modalEditarElement) {
+                    modalEditarElement.addEventListener('show.bs.modal', function (event) {
+                        const button = event.relatedTarget;
+                        const facturaId = button.getAttribute('data-factura');
+                        const productoId = button.getAttribute('data-producto');
+                        const cantidad = button.getAttribute('data-cantidad');
+                        const stock = button.getAttribute('data-stock');
+
+                        const form = document.getElementById('formEditarDetalle');
+                        form.action = `/facturas/${facturaId}/detalle/${productoId}`;
+
+                        const inputCantidad = document.getElementById('edit-cantidad');
+                        const spanStock = document.getElementById('stock-disponible');
+
+                        inputCantidad.value = cantidad;
+                        spanStock.textContent = stock;
+
+                        const nuevoInput = inputCantidad.cloneNode(true);
+                        inputCantidad.parentNode.replaceChild(nuevoInput, inputCantidad);
+
+                        nuevoInput.addEventListener('input', function () {
+                            let cantidadIngresada = parseInt(this.value) || 0;
+
+                            if (cantidadIngresada < 1) {
+                                this.value = 1;
+                            }
+
+                            if (cantidadIngresada > parseInt(stock)) {
+                                // alert('{{ config("mensajes.M36") }}'); // Deshabilitado por UX
+                                this.value = stock;
+                            }
+                        });
+                    });
+                }
+
+                // ========== MODAL DE ELIMINACIÓN ==========
+                const modalEliminarElement = document.getElementById('modalEliminarProducto');
+                if (modalEliminarElement) {
+                    modalEliminarElement.addEventListener('show.bs.modal', function (event) {
+                        const button = event.relatedTarget;
+                        const facturaId = button.getAttribute('data-factura');
+                        const productoId = button.getAttribute('data-producto');
+
+                        const form = document.getElementById('formEliminarDetalle');
+                        form.action = `/facturas/${facturaId}/detalle/${productoId}`;
+                    });
+                }
+            });
         </script>
     @endif
 
+    @if($factura->esEditable())
+        <script>
+            const CONFIG = @json($config);
+            let indexProducto = {{ $factura->detalles->count() }};
+        </script>
+
+        <script src="{{ asset('js/facturas.js') }}"></script>
+    @endif
 @endsection

@@ -24,8 +24,6 @@ class Cliente extends Model
         'estado_cli'
     ];
 
-
-    //Obtener todos los clientes
     public static function obtenerActivos()
     {
         return self::where('estado_cli', 'ACT')
